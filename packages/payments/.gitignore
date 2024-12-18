@@ -1,0 +1,7 @@
+.idea
+node_modules/
+*.env
+*.dec
+dist/
+.vscode
+junit.xml
