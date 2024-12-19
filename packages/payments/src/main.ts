@@ -1,17 +1,16 @@
+import { SERVICE_NAME } from '@common/constants';
+import { GlobalErrorFilter } from '@common/errors';
+import { validationPipe } from '@common/validation';
 import { config } from '@infrastructure/config';
+import { setUpSwagger } from '@infrastructure/swagger';
 import {
   ClassSerializerInterceptor,
   Logger,
   RequestMethod,
 } from '@nestjs/common';
 import { HttpAdapterHost, NestFactory, Reflector } from '@nestjs/core';
-import helmet from 'helmet';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { setUpSwagger } from '@infrastructure/swagger';
-import { validationPipe } from '@common/validation';
-import { scanResources } from '@infrastructure/scan-resources';
-import { SERVICE_NAME } from '@common/constants';
-import { GlobalErrorFilter } from '@common/errors';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 export async function bootstrap(): Promise<NestExpressApplication> {
@@ -41,7 +40,6 @@ export async function bootstrap(): Promise<NestExpressApplication> {
   app.enable('trust proxy');
   app.enableShutdownHooks();
 
-  scanResources(app);
   await app.init();
 
   await app.listen(config.port, () => {

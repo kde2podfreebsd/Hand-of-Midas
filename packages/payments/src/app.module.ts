@@ -1,27 +1,16 @@
-import { HTTPLoggerMiddleware, LoggerModule } from '@infrastructure/logger';
-import { AuthModule } from '@camp/auth-client';
+import { ControllersModule } from '@controllers/controllers.module';
 import { config } from '@infrastructure/config';
+import { HTTPLoggerMiddleware, LoggerModule } from '@infrastructure/logger';
 import {
-  Logger,
   MiddlewareConsumer,
   Module,
   NestModule,
   RequestMethod,
 } from '@nestjs/common';
-import { ControllersModule } from '@controllers/controllers.module';
+import { CqrsModule } from '@nestjs/cqrs';
 
 @Module({
-  imports: [
-    LoggerModule,
-    AuthModule.forRootAsync({
-      inject: [Logger],
-      useFactory: (logger: Logger) => ({
-        ...config.auth,
-        logger,
-      }),
-    }),
-    ControllersModule,
-  ],
+  imports: [CqrsModule.forRoot(), LoggerModule, ControllersModule],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
