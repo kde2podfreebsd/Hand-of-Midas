@@ -53,7 +53,7 @@ class NewsAnalyzer:
         self.db_name = "news"
         self.client = None
         self.db = None
-        self.atoma_client = AtomaAPIClient(token=os.getenv("ATOMA_TOKEN"))
+        self.atoma_client = AtomaAPIClient()
 
     async def connect_to_db(self):
         try:

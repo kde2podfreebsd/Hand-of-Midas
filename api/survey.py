@@ -8,7 +8,7 @@ import re
 
 load_dotenv()
 router = APIRouter()
-DB_PATH = "/api/survey.db"
+DB_PATH = "survey.db"
 
 async def get_db():
     db = await aiosqlite.connect(DB_PATH)
