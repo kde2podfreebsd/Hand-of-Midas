@@ -48,7 +48,6 @@ def get_atoma_client() -> AtomaAPIClient:
     return AtomaAPIClient()
 
 class ChatRequest(BaseModel):
-    chat_id: str
     message: str
 
 class ChatResponse(BaseModel):
