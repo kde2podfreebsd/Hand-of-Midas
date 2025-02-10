@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Query
-from typing import Dict, Any, List
-import httpx
 import json
 from atoma.atoma_connector import AtomaAPIClient
 import re
+from onchain.sui.bluefin.apr_pools import *
 
 router = APIRouter()
 
@@ -11,36 +10,6 @@ def remove_think_tags(analysis: str) -> str:
     pattern = r"<think>.*?</think>"
     cleaned_analysis = re.sub(pattern, "", analysis, flags=re.DOTALL)
     return cleaned_analysis.strip()
-
-def filter_top_pools_bluefin(pools_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    filtered_pools = []
-    for pool in pools_data:
-        if "day" in pool and "apr" in pool["day"]:
-            apr_total = float(pool["day"]["apr"]["total"])
-            symbol = pool.get("symbol", "Unknown")
-            token_a = pool["tokenA"]["info"].get("symbol", "Unknown")
-            token_b = pool["tokenB"]["info"].get("symbol", "Unknown")
-            address = pool.get("address", "Unknown")
-
-            filtered_pools.append({
-                "address": address,
-                "tokenA": token_a,
-                "tokenB": token_b,
-                "pool_name": symbol,
-                "apr": apr_total
-            })
-
-    top_pools = sorted(filtered_pools, key=lambda x: x["apr"], reverse=True)[:25]
-    return top_pools
-
-async def get_bluefin_pools_apr() -> Dict[str, Any]:
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"https://swap.api.sui-prod.bluefin.io/api/v1/pools/info",
-            headers={"accept": "application/json"},
-        )
-        response.raise_for_status()
-        return response.json()
 
 
 def generate_prompt(portfolio, bluefin_pools_apr) -> str:

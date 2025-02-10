@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Query, HTTPException, Body
-import httpx
-from typing import Dict, List, Any
+from typing import Dict
 from dotenv import load_dotenv
 from atoma.atoma_connector import AtomaAPIClient
 import re
 from database.sqlite_connector import ClientDatabase
+from onchain.sui.bluefin.apr_pools import *
 
 load_dotenv()
 router = APIRouter()
@@ -70,34 +70,6 @@ async def answer_question_5(
     db_client = ClientDatabase()
     await db_client.save_answer(wallet_id, 5, answer)
     return {"response": "ok", "question_id": 5}
-
-def filter_top_pools_bluefin(pools_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    filtered_pools = []
-    for pool in pools_data:
-        if "day" in pool and "apr" in pool["day"]:
-            apr_total = float(pool["day"]["apr"]["total"])
-            symbol = pool.get("symbol", "Unknown")
-            token_a = pool["tokenA"]["info"].get("symbol", "Unknown")
-            token_b = pool["tokenB"]["info"].get("symbol", "Unknown")
-            address = pool.get("address", "Unknown")
-            filtered_pools.append({
-                "address": address,
-                "tokenA": token_a,
-                "tokenB": token_b,
-                "pool_name": symbol,
-                "apr": apr_total
-            })
-    top_pools = sorted(filtered_pools, key=lambda x: x["apr"], reverse=True)[:25]
-    return top_pools
-
-async def get_bluefin_pools_apr() -> Dict[str, Any]:
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"https://swap.api.sui-prod.bluefin.io/api/v1/pools/info",
-            headers={"accept": "application/json"},
-        )
-        response.raise_for_status()
-        return response.json()
 
 @router.post("/analyze", summary="Анализ ответов для определения инвестиционных целей и риск-профиля")
 async def analyze_answers(

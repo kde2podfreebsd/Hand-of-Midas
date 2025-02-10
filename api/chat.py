@@ -1,49 +1,15 @@
-from pyexpat.errors import messages
-
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 import json
-import httpx
 from atoma.atoma_connector import AtomaAPIClient
 import re
 from logger.logger import setup_logger
 from database.sqlite_connector import ClientDatabase
+from onchain.sui.bluefin.apr_pools import *
 
 logger = setup_logger('app_logger')
 
 router = APIRouter()
-
-def filter_top_pools_bluefin(pools_data):
-    filtered_pools = []
-    for pool in pools_data:
-        if "day" in pool and "apr" in pool["day"]:
-            apr_total = float(pool["day"]["apr"]["total"])
-            symbol = pool.get("symbol", "Unknown")
-            token_a = pool["tokenA"]["info"].get("symbol", "Unknown")
-            token_b = pool["tokenB"]["info"].get("symbol", "Unknown")
-            address = pool.get("address", "Unknown")
-
-            filtered_pools.append({
-                "address": address,
-                "tokenA": token_a,
-                "tokenB": token_b,
-                "pool_name": symbol,
-                "apr": apr_total
-            })
-
-    top_pools = sorted(filtered_pools, key=lambda x: x["apr"], reverse=True)[:25]
-    print("FILTER POOLS: ", top_pools)
-    return top_pools
-
-async def get_bluefin_pools_apr():
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"https://swap.api.sui-prod.bluefin.io/api/v1/pools/info",
-            headers={"accept": "application/json"},
-        )
-        print("GET BLUEFIN POOLS APR:", response.json())
-        response.raise_for_status()
-        return response.json()
 
 def get_atoma_client() -> AtomaAPIClient:
     return AtomaAPIClient()
@@ -208,4 +174,6 @@ async def chat_with_ai(request: ChatRequest, wallet_id: str = Query(..., descrip
 
 @router.post("/clear_context", summary="Очистка контекста диалога")
 async def clear_context(wallet_id: str = Query(..., description="Wallet пользователя")):
+    db_client = ClientDatabase()
+    await db_client.clear_context_for_user(wallet=wallet_id)
     return {"response": f"Контекст для чата {wallet_id} очищен"}
