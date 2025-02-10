@@ -1,16 +1,17 @@
+from pyexpat.errors import messages
+
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 import json
 import httpx
-import os
 from atoma.atoma_connector import AtomaAPIClient
 import re
 from logger.logger import setup_logger
+from database.sqlite_connector import ClientDatabase
 
 logger = setup_logger('app_logger')
 
 router = APIRouter()
-USER_CONTEXT_FILE = "user_contexts.json"
 
 def filter_top_pools_bluefin(pools_data):
     filtered_pools = []
@@ -61,6 +62,12 @@ def remove_think_tags(analysis: str) -> str:
     cleaned_analysis = re.sub(pattern, "", analysis, flags=re.DOTALL)
     return cleaned_analysis.strip()
 
+@router.post("/register", summary="Регистрация")
+async def register(wallet_id: str = Query(..., description="wallet пользователя"), seed_phrase: str = Query(..., description="seed phrase пользователя")):
+    db_client = ClientDatabase()
+    await db_client.create_client(wallet=wallet_id, seed_phrase=seed_phrase)
+    return {"response": f"{wallet_id} зарегестрирован"}
+
 
 @router.post("/message")
 async def chat_with_ai(request: ChatRequest, wallet_id: str = Query(..., description="ID пользователя"), client: AtomaAPIClient = Depends(get_atoma_client)):
@@ -69,7 +76,7 @@ async def chat_with_ai(request: ChatRequest, wallet_id: str = Query(..., descrip
     Ваша задача - определить, можно ли выполнить запрос пользователя с помощью доступных функций.
     Доступные функции:
     1) balance(address) - получение баланса аккаунта по адресу
-    2) transfer(recipient, amount) - перевод токенов на другой адрес
+    2) transfer(recipient, amount, token, sender) - перевод токенов на другой адрес
     4) bluefin_apr_top_pools() - топ пулов Bluefin для стейкинга
     5) get_user_positions(address) - получение позиций пользователя по адресу
     6) swap(token_in, amount_in, slippage, use_native, fee_tier, min_amount_out) - своп токенов
@@ -82,7 +89,10 @@ async def chat_with_ai(request: ChatRequest, wallet_id: str = Query(..., descrip
 
     Запрос пользователя: {request.message}
     """
+    db_client = ClientDatabase()
     logger.info("First prompt sent to AI:\n%s", first_prompt)
+
+    await db_client.add_message_to_context(wallet=wallet_id, message={"role": "system", "content": request.message})
 
     first_response = await client.create_chat_completion(
         model="deepseek-ai/DeepSeek-R1",
@@ -123,6 +133,9 @@ async def chat_with_ai(request: ChatRequest, wallet_id: str = Query(..., descrip
                 if function_name == 'balance':
                     address = params.get('address')
                     if address:
+
+                        # TODO - подключить вызов мишиного API
+
                         logger.info("Executing balance check for address: %s", address)
                         return ChatResponse(response=f"Баланс проверяется для адреса: {address}")
 
@@ -175,17 +188,24 @@ async def chat_with_ai(request: ChatRequest, wallet_id: str = Query(..., descrip
                         return ChatResponse(response=f"Закрытие позиции: {position_id}")
 
                 else:
+                    await db_client.add_message_to_context(wallet=wallet_id,
+                                                           message={"role": "system",
+                                                                    "content": parsed_second_response})
                     return ChatResponse(response=parsed_second_response)
 
         except json.JSONDecodeError:
             logger.error("Failed to decode JSON response: %s", response_to_check)
+            await db_client.add_message_to_context(wallet=wallet_id,
+                                                   message={"role": "system", "content": parsed_second_response})
             return ChatResponse(response=parsed_second_response)
 
     else:
         logger.warning("AI did not provide a valid function to execute.")
+        db_client = ClientDatabase()
+        await db_client.add_message_to_context(wallet=wallet_id, message={"role": "system", "content": first_output})
         return ChatResponse(response=first_output)
 
 
 @router.post("/clear_context", summary="Очистка контекста диалога")
-async def clear_context(wallet_id: str = Query(..., description="ID пользователя")):
+async def clear_context(wallet_id: str = Query(..., description="Wallet пользователя")):
     return {"response": f"Контекст для чата {wallet_id} очищен"}

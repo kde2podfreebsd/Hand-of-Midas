@@ -1,51 +1,18 @@
-from fastapi import APIRouter, Query, HTTPException, Depends, Body
-import aiosqlite
+from fastapi import APIRouter, Query, HTTPException, Body
 import httpx
 from typing import Dict, List, Any
 from dotenv import load_dotenv
 from atoma.atoma_connector import AtomaAPIClient
 import re
+from database.sqlite_connector import ClientDatabase
 
 load_dotenv()
 router = APIRouter()
-DB_PATH = "survey.db"
-
-async def get_db():
-    db = await aiosqlite.connect(DB_PATH)
-    try:
-        yield db
-    finally:
-        await db.close()
-
-async def init_db():
-    async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("""
-        CREATE TABLE IF NOT EXISTS survey_answers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id TEXT NOT NULL,
-            question_id INTEGER NOT NULL,
-            answer TEXT NOT NULL
-        )
-        """)
-        await db.commit()
 
 def remove_think_tags(analysis: str) -> str:
     pattern = r"<think>.*?</think>"
     cleaned_analysis = re.sub(pattern, "", analysis, flags=re.DOTALL)
     return cleaned_analysis.strip()
-
-async def save_answer(user_id: str, question_id: int, answer: str, db: aiosqlite.Connection):
-    await db.execute(
-        "INSERT INTO survey_answers (user_id, question_id, answer) VALUES (?, ?, ?)",
-        (user_id, question_id, answer)
-    )
-    await db.commit()
-
-async def get_user_answers(user_id: str, db: aiosqlite.Connection) -> Dict[int, str]:
-    cursor = await db.execute("SELECT * FROM survey_answers WHERE user_id = ?", (user_id,))
-    rows = await cursor.fetchall()
-    answers = {row[2]: row[3] for row in rows}
-    return answers
 
 def generate_prompt(answers: Dict[int, str]) -> str:
     prompt = """
@@ -59,47 +26,49 @@ def generate_prompt(answers: Dict[int, str]) -> str:
 
 @router.post("/question1", summary="Какую сумму вы планируете инвестировать в криптовалютные активы? Укажите диапазон или конкретную сумму.")
 async def answer_question_1(
-    wallet_id: str = Query(..., description="ID пользователя"),
+    wallet_id: str = Query(..., description="Wallet пользователя"),
     answer: str = Body(..., description="Ответ на вопрос 1"),
-    db: aiosqlite.Connection = Depends(get_db)
 ):
-    await save_answer(wallet_id, 1, answer, db)
+    db_client = ClientDatabase()
+    await db_client.save_answer(wallet_id, 1, answer)
     return {"response": "ok", "question_id": 1}
 
 @router.post("/question2", summary="Какой временной горизонт вы планируете для своих инвестиций (до 1 года, 1-5 лет, более 5 лет)?")
 async def answer_question_2(
-    wallet_id: str = Query(..., description="ID пользователя"),
+    wallet_id: str = Query(..., description="Wallet пользователя"),
     answer: str = Body(..., description="Ответ на вопрос 2"),
-    db: aiosqlite.Connection = Depends(get_db)
 ):
-    await save_answer(wallet_id, 2, answer, db)
+    db_client = ClientDatabase()
+    await db_client.save_answer(wallet_id, 2, answer)
     return {"response": "ok", "question_id": 2}
 
 @router.post("/question3", summary="Какую долю своего капитала вы готовы инвестировать в высокорисковые активы (например, мемкоины)?")
 async def answer_question_3(
-    wallet_id: str = Query(..., description="ID пользователя"),
+    wallet_id: str = Query(..., description="Wallet пользователя"),
     answer: str = Body(..., description="Ответ на вопрос 3"),
-    db: aiosqlite.Connection = Depends(get_db)
 ):
-    await save_answer(wallet_id, 3, answer, db)
+    db_client = ClientDatabase()
+    await db_client.save_answer(wallet_id, 3, answer)
     return {"response": "ok", "question_id": 3}
 
 @router.post("/question4", summary="Как часто вы планируете мониторить свои инвестиции и перебалансировать портфель (ежедневно, еженедельно, ежемесячно)?")
 async def answer_question_4(
-    wallet_id: str = Query(..., description="ID пользователя"),
+    wallet_id: str = Query(..., description="Wallet пользователя"),
     answer: str = Body(..., description="Ответ на вопрос 4"),
-    db: aiosqlite.Connection = Depends(get_db)
+    
 ):
-    await save_answer(wallet_id, 4, answer, db)
+    db_client = ClientDatabase()
+    await db_client.save_answer(wallet_id, 4, answer)
     return {"response": "ok", "question_id": 4}
 
 @router.post("/question5", summary="Какую роль играют эмоции в ваших инвестиционных решениях (значительную, незначительную, не играют роли)?")
 async def answer_question_5(
-    wallet_id: str = Query(..., description="ID пользователя"),
+    wallet_id: str = Query(..., description="Wallet пользователя"),
     answer: str = Body(..., description="Ответ на вопрос 5"),
-    db: aiosqlite.Connection = Depends(get_db)
+    
 ):
-    await save_answer(wallet_id, 5, answer, db)
+    db_client = ClientDatabase()
+    await db_client.save_answer(wallet_id, 5, answer)
     return {"response": "ok", "question_id": 5}
 
 def filter_top_pools_bluefin(pools_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -132,10 +101,10 @@ async def get_bluefin_pools_apr() -> Dict[str, Any]:
 
 @router.post("/analyze", summary="Анализ ответов для определения инвестиционных целей и риск-профиля")
 async def analyze_answers(
-    user_id: str = Query(..., description="ID пользователя"),
-    db: aiosqlite.Connection = Depends(get_db)
+    user_id: str = Query(..., description="Wallet пользователя"),
 ):
-    answers = await get_user_answers(user_id, db)
+    db_client = ClientDatabase()
+    answers = await db_client.get_user_answers(user_id)
     if not answers or len(answers) < 5:
         raise HTTPException(status_code=400, detail="Не все вопросы были заполнены")
 
@@ -195,4 +164,5 @@ async def analyze_answers(
 
 @router.on_event("startup")
 async def startup_event():
-    await init_db()
+    db_client = ClientDatabase()
+    await db_client.initialize_tables()

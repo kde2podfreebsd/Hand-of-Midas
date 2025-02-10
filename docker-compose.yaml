@@ -1,6 +1,12 @@
 version: "3.8"
 
 services:
+  onchain_sui:
+    container_name: onchain_sui
+    build: onchain/sui/analytics/.
+    ports:
+      - "8080:8080"
+    restart: always
 
   mongodb:
     image: mongo:latest
