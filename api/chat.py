@@ -98,8 +98,9 @@ async def chat_with_ai(request: ChatRequest, wallet_id: str = Query(..., descrip
                 params = action_data['parameters']
 
                 if function_name == 'balance':
+                    print(f"GET USER BALANCE: {wallet_id}!!!")
                     response = await get_sui_user_portfolio(wallet=wallet_id)
-
+                    print(f"GET USER BALANCE: {response}!!!")
                     logger.info("Executing balance check for address: %s \n%s", wallet_id, response)
                     return ChatResponse(response=f"Баланс активов для адреса - {wallet_id}: {response}")
 
