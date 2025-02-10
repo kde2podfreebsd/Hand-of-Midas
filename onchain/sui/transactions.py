@@ -7,4 +7,6 @@ async def get_sui_user_portfolio(wallet: str):
             headers={"accept": "application/json"},
         )
         response.raise_for_status()
+        print(response)
+        print(response.json())
         return response.json()
