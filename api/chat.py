@@ -43,13 +43,13 @@ async def chat_with_ai(request: ChatRequest, wallet_id: str = Query(..., descrip
     Ваша задача - определить, можно ли выполнить запрос пользователя с помощью доступных функций.
     Доступные функции:
     1) balance() - получение баланса(/портфолио, монеты, активы) аккаунта юзера.
-    2) transfer(recipient, amount, token, sender) - перевод токенов на другой адрес
-    4) bluefin_apr_top_pools() - топ пулов Bluefin для стейкинга
-    5) get_user_positions(address) - получение позиций пользователя по адресу
-    6) swap(token_in, amount_in, slippage, use_native, fee_tier, min_amount_out) - своп токенов
-    7) open(position_params) - открытие новой позиции ликвидности
-    8) collect(position_id) - сбор наград и комиссий для позиции
-    9) close(position_id) - закрытие позиции ликвидности
+    2) transfer(recipient, amount, token, sender) - перевод токенов на другой адрес. 
+    3) bluefin_apr_top_pools() - топ пулов Bluefin для стейкинга
+    4) get_user_positions(address) - получение позиций пользователя по адресу
+    5) swap(token_in, amount_in, slippage, use_native, fee_tier, min_amount_out) - своп токенов
+    6) open(position_params) - открытие новой позиции ликвидности
+    7) collect(position_id) - сбор наград и комиссий для позиции
+    8) close(position_id) - закрытие позиции ликвидности
     Формат ответа должен быть строго JSON:
     {{\"function\": \"имя_функции\", \"parameters\": {{\"параметр1\": \"значение1\", \"параметр2\": \"значение2\"}}}}
     Если действие невозможно выполнить, верните: {{}}
@@ -100,7 +100,7 @@ async def chat_with_ai(request: ChatRequest, wallet_id: str = Query(..., descrip
                 if function_name == 'balance':
                     response = await get_sui_user_portfolio(wallet=wallet_id)
                     logger.info("Executing balance check for address: %s \n%s", wallet_id, response)
-                    return ChatResponse(response=f"Баланс активов для адреса - {wallet_id}: {response}")
+                    return ChatResponse(response=f"Баланс активов для адреса https://suiscan.xyz/testnet/account/{wallet_id}: {response}")
 
                 elif function_name == 'transfer':
                     recipient = params.get('recipient')
