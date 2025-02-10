@@ -3,6 +3,7 @@ import json
 from atoma.atoma_connector import AtomaAPIClient
 import re
 from onchain.sui.bluefin.apr_pools import *
+from onchain.sui.transactions import *
 
 router = APIRouter()
 
@@ -38,11 +39,7 @@ async def analyze_portfolio(
     wallet_id: str = Query(..., description="ID пользователя")
 ):
     bluefin_pools_apr = await get_bluefin_pools_apr()
-
-    # TODO GET PORTFOLIO BY WALLET
-    portfolio = wallet_id
-    portfolio = {"ton":{"0":{"active":{"ton":{"symbol":"TON","balance":"0.383","price":5.54355},"usdt":{"symbol":"USDT","balance":"1.984","price":1},"aquausd":{"symbol":"AquaUSD","balance":"0.3","price":0.9916731560358745},"hmstr":{"symbol":"HMSTR","balance":"67.379","price":0.0027899336420561557}}}},"bybit":{"0":{"active":{"l3":{"symbol":"L3","balance":"3","price":"0.0887"},"usdt":{"symbol":"USDT","balance":"0.11","price":"0.998617\n"}},"trading":{"usdt":{"symbol":"USDT","balance":"1","price":"0.998617\n"}}}},"okx":{"0":{"active":{"usdc":{"symbol":"USDC","balance":"2","price":"1.0014"},"btc":{"symbol":"BTC","balance":"0.0000052","price":"92472.8"}},"trading":{"ton":{"symbol":"TON","balance":"0.47","price":"5.551"},"usdc":{"symbol":"USDC","balance":"2.18","price":"1.0014"}}}},"sol":{"0":{"active":{"sol":{"symbol":"SOL","balance":"0.01","price":"187.77"}}}}}
-
+    portfolio = await get_sui_user_portfolio(wallet=wallet_id)
     prompt = generate_prompt(portfolio, bluefin_pools_apr)
 
     atoma_client = AtomaAPIClient()
