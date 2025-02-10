@@ -1,10 +1,14 @@
 FROM golang:1.23.6 AS builder
 LABEL authors="mixalight"
 WORKDIR /app
+
 COPY go.mod go.sum ./
-RUN go mod tidy
+
+RUN go mod download
+
 COPY . .
-RUN go build -o main ./cmd/app/main.go
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o main ./cmd/app/main.go
 
 FROM alpine:latest
 WORKDIR /root/
