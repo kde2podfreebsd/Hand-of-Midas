@@ -25,11 +25,11 @@ func GetBalance(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get balance: %v", err)
 	}
-	var balance []Balance
 	jsonResp, err := json.Marshal(resp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal responce: %v", err)
 	}
+	var balance []Balance
 	err = json.Unmarshal(jsonResp, &balance)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal json resp: %v", err)
