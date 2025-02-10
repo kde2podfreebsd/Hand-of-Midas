@@ -6,6 +6,7 @@ import re
 from logger.logger import setup_logger
 from database.sqlite_connector import ClientDatabase
 from onchain.sui.bluefin.apr_pools import *
+from onchain.sui.transactions import *
 
 logger = setup_logger('app_logger')
 
@@ -41,7 +42,7 @@ async def chat_with_ai(request: ChatRequest, wallet_id: str = Query(..., descrip
     Вы выступаете в роли посредника между пользователем и системой управления блокчейном Sui.
     Ваша задача - определить, можно ли выполнить запрос пользователя с помощью доступных функций.
     Доступные функции:
-    1) balance(address) - получение баланса аккаунта по адресу
+    1) balance() - получение баланса(/портфолио, монеты, активы) аккаунта юзера.
     2) transfer(recipient, amount, token, sender) - перевод токенов на другой адрес
     4) bluefin_apr_top_pools() - топ пулов Bluefin для стейкинга
     5) get_user_positions(address) - получение позиций пользователя по адресу
@@ -97,13 +98,10 @@ async def chat_with_ai(request: ChatRequest, wallet_id: str = Query(..., descrip
                 params = action_data['parameters']
 
                 if function_name == 'balance':
-                    address = params.get('address')
-                    if address:
+                    response = await get_sui_user_portfolio(wallet=wallet_id)
 
-                        # TODO - подключить вызов мишиного API
-
-                        logger.info("Executing balance check for address: %s", address)
-                        return ChatResponse(response=f"Баланс проверяется для адреса: {address}")
+                    logger.info("Executing balance check for address: %s \n%s", wallet_id, response)
+                    return ChatResponse(response=f"Баланс активов для адреса - {wallet_id}: {response}")
 
                 elif function_name == 'transfer':
                     recipient = params.get('recipient')

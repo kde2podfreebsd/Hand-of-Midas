@@ -28,11 +28,10 @@ func handler(ctx context.Context, client sui.ISuiAPI) http.HandlerFunc {
 }
 
 func main() {
-	ctx := context.Background()
-	client := sui.NewSuiClient(constant.BvTestnetEndpoint)
-
-	http.Handle("/api/balance", handler(ctx, client))
-	port := "8080"
-	log.Println("Server started on port", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+    ctx := context.Background()
+    client := sui.NewSuiClient(constant.BvTestnetEndpoint)
+    http.Handle("/api/balance", handler(ctx, client))
+    port := "8080"
+    log.Printf("Server started on port %s\n", port)
+    log.Fatal(http.ListenAndServe("0.0.0.0:" + port, nil))
 }
