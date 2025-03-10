@@ -48,7 +48,7 @@ func GetOwnedObjects(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get owned objects: %v", err)
 	}
-	//utils.PrettyPrint(resp)
+	utils.PrettyPrint(resp)
 	jsonResp, err := json.Marshal(resp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal responce: %v", err)
