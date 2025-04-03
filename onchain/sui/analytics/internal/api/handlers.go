@@ -4,9 +4,16 @@ import (
 	s "analytics/internal/suiClient"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/block-vision/sui-go-sdk/sui"
 	"net/http"
 )
+
+func Pong() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "pong")
+	}
+}
 
 func BalanceCheckHandler(ctx context.Context, client sui.ISuiAPI) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

@@ -13,4 +13,5 @@ func SetupRoutes(
 	http.HandleFunc("/api/balance", BalanceCheckHandler(ctx, client))
 	http.HandleFunc("/api/objects", GetOwnedObjectsHandler(ctx, client))
 	http.HandleFunc("/api/transaction", GetTransactionHandler(ctx, client))
+	http.HandleFunc("/api/ping", Pong())
 }
