@@ -10,6 +10,7 @@ import (
 const (
 	coinListURL    = "https://api.coingecko.com/api/v3/coins/list"
 	coinPatternURL = "https://api.coingecko.com/api/v3/coins/%s"
+	platformName   = "sui"
 )
 
 type coin struct {
@@ -41,13 +42,23 @@ func getCoinMap() (map[string]string, error) {
 	}
 	coinMap := make(map[string]string)
 	for _, coin := range coinsList {
-		coinMap[coin.Name] = coin.Symbol
+		coinMap[coin.Name] = coin.Id
+	}
+	for key, value := range coinMap {
+		if key == "sui" {
+			fmt.Printf("%s: %s\n", key, value)
+		}
 	}
 	return coinMap, nil
 }
 
 func GetDecimalPlace(coinName string) (*int, error) {
-	resp, err := http.Get(fmt.Sprintf(coinPatternURL, coinName))
+	coinMap, err := getCoinMap()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get coin list in like map: %w", err)
+	}
+	url := fmt.Sprintf(coinPatternURL, coinMap[coinName])
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get information for coin %s: %w", coinName, err)
 	}
@@ -58,6 +69,6 @@ func GetDecimalPlace(coinName string) (*int, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal answer: %w", err)
 	}
-	tmp := coin.DetailPlatforms[coinName].DecimalPlace
+	tmp := coin.DetailPlatforms[platformName].DecimalPlace
 	return &tmp, nil
 }
