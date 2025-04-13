@@ -1,6 +1,15 @@
 import httpx
 
-def filter_top_pools_bluefin(pools_data):
+async def get_bluefin_pools_apr():
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"https://swap.api.sui-prod.bluefin.io/api/v1/pools/info",
+            headers={"accept": "application/json"},
+        )
+        response.raise_for_status()
+        return response.json()
+
+def top25_bluefin_pools(pools_data):
     filtered_pools = []
     for pool in pools_data:
         if "day" in pool and "apr" in pool["day"]:
@@ -19,15 +28,4 @@ def filter_top_pools_bluefin(pools_data):
             })
 
     top_pools = sorted(filtered_pools, key=lambda x: x["apr"], reverse=True)[:25]
-    print("FILTER POOLS: ", top_pools)
     return top_pools
-
-async def get_bluefin_pools_apr():
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"https://swap.api.sui-prod.bluefin.io/api/v1/pools/info",
-            headers={"accept": "application/json"},
-        )
-        print("GET BLUEFIN POOLS APR:", response.json())
-        response.raise_for_status()
-        return response.json()
