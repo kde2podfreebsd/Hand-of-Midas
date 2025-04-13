@@ -1,0 +1,96 @@
+version: "3.8"
+
+services:
+  # PostgreSQL DB | LLM AGENT's
+  postgres_llm:
+    container_name: postgres_llm
+    image: postgres:14.1-alpine
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${LLM_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${LLM_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${LLM_POSTGRES_DB}
+    volumes:
+      - postgres_llm_data:/var/lib/postgresql/data
+    networks:
+      - custom
+    ports:
+      - "5432:5432"
+
+  # PostgreSQL DB | FRONTEND
+  postgres_frontend:
+    container_name: postgres_frontend
+    image: postgres:14.1-alpine
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${FRONTEND_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${FRONTEND_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${FRONTEND_POSTGRES_DB}
+    volumes:
+      - postgres_frontend_data:/var/lib/postgresql/data
+    networks:
+      - custom
+    ports:
+      - "5433:5432"
+
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4
+    restart: always
+    env_file:
+      - .env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "5050:80"
+    networks:
+      - custom
+    depends_on:
+      - postgres_llm
+      - postgres_frontend
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - custom
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: ${MONGO_URI}
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USERNAME}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD}
+    depends_on:
+      - mongodb
+    networks:
+      - custom
+
+volumes:
+  postgres_llm_data:
+    driver: local
+  postgres_frontend_data:
+    driver: local
+  mongodb_data:
+    driver: local
+
+networks:
+  custom:
+    driver: bridge
