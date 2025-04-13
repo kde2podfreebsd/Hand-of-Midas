@@ -1,24 +1,6 @@
 version: "3.8"
 
 services:
-  # PostgreSQL DB | LLM AGENT's
-  postgres_llm:
-    container_name: postgres_llm
-    image: postgres:14.1-alpine
-    restart: always
-    env_file:
-      - .env
-    environment:
-      POSTGRES_USER: ${LLM_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${LLM_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${LLM_POSTGRES_DB}
-    volumes:
-      - postgres_llm_data:/var/lib/postgresql/data
-    networks:
-      - custom
-    ports:
-      - "5432:5432"
-
   # PostgreSQL DB | FRONTEND
   postgres_frontend:
     container_name: postgres_frontend
@@ -35,7 +17,7 @@ services:
     networks:
       - custom
     ports:
-      - "5433:5432"
+      - "5432:5432"
 
   pgadmin:
     container_name: pgadmin4_container
@@ -51,7 +33,6 @@ services:
     networks:
       - custom
     depends_on:
-      - postgres_llm
       - postgres_frontend
 
   mongodb:

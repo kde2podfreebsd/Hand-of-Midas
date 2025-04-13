@@ -2,7 +2,7 @@ from telethon import TelegramClient, events
 import os
 from datetime import datetime
 from typing import List, Callable
-from llmAgents.database.mongodb.connector import MongoDBConnector
+from llmAgents.database.mongodb.telegramPosts import TelegramPostConnector
 import pytz
 from dotenv import load_dotenv
 from llmAgents.logger.logger import setup_logger
@@ -24,7 +24,7 @@ class UserAgentCore:
         self.message_handler = None
         self.db_uri = f"mongodb://{os.getenv('MONGO_INITDB_ROOT_USERNAME')}:{os.getenv('MONGO_INITDB_ROOT_PASSWORD')}@localhost:27017/"
         self.db_name = "news"
-        self.connector = MongoDBConnector(self.db_uri, self.db_name)
+        self.connector = TelegramPostConnector(self.db_uri, self.db_name)
 
         if not os.path.exists(self.sessions_dirPath):
             os.makedirs(self.sessions_dirPath)
@@ -144,25 +144,20 @@ if __name__ == "__main__":
     channels_to_monitor = [
         "@markettwits",
         "@ftsec",
-
     ]
 
-
     async def main():
-        core = UserAgentCore("test_session", os.getenv('APP_ID'), os.getenv('API_HASH'))
+        core = UserAgentCore("test_session", int(os.getenv('APP_ID')), os.getenv('API_HASH'))
 
         for channel in channels_to_monitor:
-            await core.get_channel_history(channel_username=channel, end_date=datetime(2024, 12, 1, tzinfo=pytz.UTC))
+            await core.get_channel_history(channel_username=channel, end_date=datetime(2025, 3, 1, tzinfo=pytz.UTC))
 
         async def message_callback(message_data):
             logger.info(f"New message in {message_data}:")
             logger.info(message_data['text'])
 
         await core.add_channels_to_monitor(channels=channels_to_monitor)
-
         await core.start_monitoring(message_callback)
 
-
     import asyncio
-
     asyncio.run(main())
