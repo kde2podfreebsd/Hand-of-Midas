@@ -1,31 +1,46 @@
 import httpx
+import asyncio
+from llmAgents.database.mongodb.pools import PoolsConnector
 
-async def get_bluefin_pools_apr():
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"https://swap.api.sui-prod.bluefin.io/api/v1/pools/info",
-            headers={"accept": "application/json"},
-        )
-        response.raise_for_status()
-        return response.json()
+class BlueFin_Pools_APR_parser():
+    def __init__(self):
+        self.pools_connector = PoolsConnector(uri="mongodb://root:rootpassword@localhost:27017/", db_name="pools_data")
 
-def top25_bluefin_pools(pools_data):
-    filtered_pools = []
-    for pool in pools_data:
-        if "day" in pool and "apr" in pool["day"]:
-            apr_total = float(pool["day"]["apr"]["total"])
-            symbol = pool.get("symbol", "Unknown")
-            token_a = pool["tokenA"]["info"].get("symbol", "Unknown")
-            token_b = pool["tokenB"]["info"].get("symbol", "Unknown")
-            address = pool.get("address", "Unknown")
+    async def get_bluefin_pools_apr(self):
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"https://swap.api.sui-prod.bluefin.io/api/v1/pools/info",
+                headers={"accept": "application/json"},
+            )
+            response.raise_for_status()
+            return response.json()
 
-            filtered_pools.append({
-                "address": address,
-                "tokenA": token_a,
-                "tokenB": token_b,
-                "pool_name": symbol,
-                "apr": apr_total
-            })
+    async def format_bluefin_pool_data(self, bluefin_pools):
+        formatted_pools = []
+        for pool in bluefin_pools:
+            formatted_pool = {
+                "Pool Name": pool["symbol"],
+                "Protocol": "Bluefin",
+                "Fee": pool["feeRate"],
+                "TVL": pool["tvl"],
+                "APR": pool["month"]["apr"]["total"],
+                "1D vol": pool["day"]["volume"],
+                "30D vol": pool["month"]["volume"],
+                "1D vol/TVL": pool["day"]["volumeQuoteQty"],
+            }
 
-    top_pools = sorted(filtered_pools, key=lambda x: x["apr"], reverse=True)[:25]
-    return top_pools
+            if "Pool Name" in formatted_pool:
+                formatted_pools.append(formatted_pool)
+            else:
+                print(f"Warning: pool data missing 'Pool Name'. Skipping pool {pool}")
+
+        return formatted_pools
+
+    async def save_bluefin_pools(self):
+        await self.pools_connector.create_collection()
+        pools_data = await self.get_bluefin_pools_apr()
+        formatted_pools = await self.format_bluefin_pool_data(pools_data)
+
+        for pool_data in formatted_pools:
+            await self.pools_connector.insert_or_update_pool(pool_data, source="bluefin")
+

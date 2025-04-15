@@ -1,12 +1,25 @@
 from pydantic import BaseModel
 from typing import List
+from datetime import datetime
 
-class ChatMessageResponse(BaseModel):
+class Message(BaseModel):
+    role: str
+    content: str
+    timestamp: datetime
+
+class ChatEntry(BaseModel):
     user_id: str
-    message: str
-    date: str
-    is_user: bool
+    messages: List[Message]
 
 class PaginatedChatHistoryResponse(BaseModel):
-    history: List[ChatMessageResponse]
+    entries: List[ChatEntry]
     page: int
+
+class SendMessageRequest(BaseModel):
+    message: str
+
+class SendMessageResponse(BaseModel):
+    user_id: str
+    message: str
+    response: str
+    timestamp: datetime

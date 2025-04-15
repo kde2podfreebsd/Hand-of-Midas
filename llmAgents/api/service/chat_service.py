@@ -1,31 +1,21 @@
+from llmAgents.llm.chatgpt_service import ChatGPTService
 from llmAgents.database.mongodb.chat_history import ChatHistoryConnector
-from llmAgents.llm.agent import ChatLLMAgent
-from typing import List
 
 class ChatService:
-    def __init__(self, connector: ChatHistoryConnector):
-        self.connector = connector
-        self.llm_agent = ChatLLMAgent()
+    def __init__(self, mongodb_uri: str, db_name: str):
+        self.mongodb_uri = mongodb_uri
+        self.db_name = db_name
+        self.chatgpt_service = ChatGPTService()
 
-    async def send_message(self, user_id: str, message: str):
-        # Сохранение сообщения в базе данных
-        response = await self.connector.insert_message(user_id, message, is_user=True)
-        # Генерация ответа от LLM
-        llm_response = await self.llm_agent.get_response(message)
-        response = await self.connector.insert_message(user_id, llm_response, is_user=False)
-        return response
+    async def send_message(self, user_id: str, message: str) -> str:
+        await self.chatgpt_service.setup_history_connector(self.mongodb_uri, self.db_name)
+        response_text = await self.chatgpt_service.send_message(user_id, message)
+        await self.chatgpt_service.close_history_connector()
+        return response_text
 
-    async def get_chat_history(self, user_id: str, page: int):
-        return await self.connector.get_paginated_history(user_id, page)
-
-    async def edit_message(self, user_id: str, message_id: str, new_message: str):
-        await self.connector.edit_message(user_id, message_id, new_message)
-        # Прерывание текущего запроса LLM, если редактируется активное сообщение
-        await self.llm_agent.stop_current_request()
-        return {"message": "Message edited successfully"}
-
-    async def delete_message(self, user_id: str, message_id: str):
-        await self.connector.delete_message(user_id, message_id)
-        # Удаление всех последующих сообщений
-        await self.connector.delete_subsequent_messages(user_id, message_id)
-        return {"message": "Message deleted successfully"}
+    async def get_history(self, user_id: str, page: int) -> list:
+        connector = ChatHistoryConnector(self.mongodb_uri, self.db_name)
+        await connector.connect()
+        history = await connector.get_paginated_history(user_id=user_id, page=page)
+        await connector.close()
+        return history

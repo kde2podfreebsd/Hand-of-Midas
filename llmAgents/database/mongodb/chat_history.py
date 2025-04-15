@@ -1,62 +1,39 @@
 from llmAgents.database.mongodb.connector import BaseMongoDBConnector
+import pymongo
 from datetime import datetime
 
+
 class ChatHistoryConnector(BaseMongoDBConnector):
-    def __init__(self, uri, db_name):
-        super().__init__(uri, db_name)
+    async def create_collection(self):
+        collections = await self.db.list_collection_names()
+        if "chat_history" in collections:
+            self.logger.info("Collection 'chat_history' already exists.")
+        else:
+            await self.db.create_collection("chat_history")
+            self.logger.info("Collection 'chat_history' created.")
 
-    async def connect(self):
-        try:
-            await super().connect()  # Вызовем connect родительского класса для установки соединения.
-            if not self.db:
-                raise ValueError("Database connection not established.")
-            self.logger.info(f"Connected to database: {self.db_name}")
-        except Exception as e:
-            self.logger.error(f"Error connecting to the database: {e}")
-            raise Exception(f"Error connecting to the database: {e}")
-
-    async def insert_message(self, user_id: str, message: str, is_user: bool):
-        await self.connect()  # Ensure the connection is established before performing any operations.
+    async def insert_chat_entry(self, chat_entry: dict):
+        await self.create_collection()
         collection = self.db["chat_history"]
-        message_data = {
-            "user_id": user_id,
-            "message": message,
-            "date": datetime.utcnow(),
-            "is_user": is_user
-        }
-        result = await collection.insert_one(message_data)
-        return {"user_id": user_id, "message": message, "date": message_data["date"].isoformat(), "is_user": is_user}
+        result = await collection.insert_one(chat_entry)
+        self.logger.info(f"Inserted chat entry for user_id: {chat_entry.get('user_id')} with id: {result.inserted_id}")
+        return result.inserted_id
 
-    async def get_paginated_history(self, user_id: str, page: int, page_size: int = 20):
-        await self.connect()  # Ensure the connection is established before performing any operations.
+    async def get_paginated_history(self, user_id: str, page: int = 1, page_size: int = 20):
+        await self.create_collection()
         collection = self.db["chat_history"]
         skip = (page - 1) * page_size
-        cursor = collection.find({"user_id": user_id}).sort("date", -1).skip(skip).limit(page_size)
-        documents = await cursor.to_list(length=page_size)
+        cursor = collection.find({"user_id": user_id}).sort("messages.timestamp", pymongo.DESCENDING).skip(skip).limit(page_size)
+        history_entries = await cursor.to_list(length=page_size)
 
-        return [
-            {
-                "user_id": doc["user_id"],
-                "message": doc["message"],
-                "date": doc["date"].isoformat(),
-                "is_user": doc["is_user"]
-            }
-            for doc in documents
-        ]
+        for entry in history_entries:
+            for message in entry.get("messages", []):
+                if isinstance(message.get("timestamp"), str):
+                    try:
+                        message["timestamp"] = datetime.strptime(message["timestamp"], "%Y-%m-%d %H:%M:%S UTC")
+                    except ValueError as e:
+                        self.logger.error(f"Error parsing timestamp: {e}")
 
-    async def edit_message(self, user_id: str, message_id: str, new_message: str):
-        collection = self.db["chat_history"]
-        result = await collection.update_one(
-            {"_id": message_id, "user_id": user_id},
-            {"$set": {"message": new_message}}
-        )
-        return result.modified_count
+            entry["messages"] = list(reversed(entry["messages"]))
 
-    async def delete_message(self, user_id: str, message_id: str):
-        collection = self.db["chat_history"]
-        await collection.delete_one({"_id": message_id, "user_id": user_id})
-
-    async def delete_subsequent_messages(self, user_id: str, message_id: str):
-        collection = self.db["chat_history"]
-        # Удалить все сообщения, которые идут после удаленного
-        await collection.delete_many({"user_id": user_id, "date": {"$gt": message_id}})
+        return history_entries
