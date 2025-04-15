@@ -79,7 +79,7 @@ if __name__ == "__main__":
     async def test():
         connector = TelegramPostConnector(uri="mongodb://root:rootpassword@localhost:27017/", db_name="news")
         await connector.connect()
-        result = await connector.create_post_collection()
+        result = await connector.get_paginated_posts(page_size=20, page=1)
         print(f"Create collection result: {result}")
         await connector.close()
     asyncio.run(test())

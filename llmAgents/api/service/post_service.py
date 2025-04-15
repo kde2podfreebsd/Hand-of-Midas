@@ -1,4 +1,4 @@
-from llmAgents.database.mongodb.telegramPosts import TelegramPostConnector
+from llmAgents.database.mongodb.telegram_posts import TelegramPostConnector
 
 
 class PostService:
