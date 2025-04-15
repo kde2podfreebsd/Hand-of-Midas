@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from llmAgents.api.schema.post import PaginatedPostsResponse, PostResponse
 from llmAgents.api.service.post_service import PostService
-from llmAgents.database.mongodb.telegramPosts import TelegramPostConnector
+from llmAgents.database.mongodb.telegram_posts import TelegramPostConnector
 
 router = APIRouter(tags=["News"])
 

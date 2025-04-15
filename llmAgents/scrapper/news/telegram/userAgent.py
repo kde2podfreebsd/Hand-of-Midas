@@ -2,7 +2,7 @@ from telethon import TelegramClient, events
 import os
 from datetime import datetime
 from typing import List, Callable
-from llmAgents.database.mongodb.telegramPosts import TelegramPostConnector
+from llmAgents.database.mongodb.telegram_posts import TelegramPostConnector
 import pytz
 from dotenv import load_dotenv
 from llmAgents.logger.logger import setup_logger
