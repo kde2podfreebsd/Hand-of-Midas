@@ -6,25 +6,31 @@ import (
 	"github.com/block-vision/sui-go-sdk/constant"
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/nanmu42/etherscan-api"
+	"os"
 )
 
 const (
-	ethNodeURL = ""
+	ethNodeURL = "https://eth-mainnet.g.alchemy.com/v2/HfJmJB941pwDugydgaqI33-kFW0clzSi"
 )
 
 type Clients struct {
-	SuiClient sui.ISuiAPI
-	EthClient *ethclient.Client
+	SuiClient          sui.ISuiAPI
+	EtherscanAPIClient *etherscan.Client
+	EthClient          *ethclient.Client
 }
 
 func CreateClients(ctx context.Context) (*Clients, error) {
+	etherscanApiKey := os.Getenv("APIKEY")
 	suiClient := sui.NewSuiClient(constant.BvTestnetEndpoint)
-	ethClient, err := ethclient.DialContext(ctx, ethNodeURL)
+	etherscanAPIClient := etherscan.New(etherscan.Mainnet, etherscanApiKey)
+	ethClient, err := ethclient.DialContext(context.Background(), ethNodeURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create eth client: %w", err)
+		return nil, fmt.Errorf("failed to create ethClient: %w", err)
 	}
 	return &Clients{
-		SuiClient: suiClient,
-		EthClient: ethClient,
+		SuiClient:          suiClient,
+		EtherscanAPIClient: etherscanAPIClient,
+		EthClient:          ethClient,
 	}, nil
 }
