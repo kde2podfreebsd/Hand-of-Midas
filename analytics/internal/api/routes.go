@@ -14,6 +14,7 @@ func SetupRoutes(
 	http.HandleFunc("/analytics/ping", Pong())
 	http.HandleFunc("/sui/balance", SuiBalanceCheckHandler(ctx, clients.SuiClient))
 	http.HandleFunc("/sui/objects", GetOwnedObjectsHandler(ctx, clients.SuiClient))
-	http.HandleFunc("/sui/transaction", GetTransactionHandler(ctx, clients.SuiClient))
-	http.HandleFunc("/eth/balance", EthBalanceCheckHandler(ctx, clients.EthClient))
+	http.HandleFunc("/sui/transaction", GetSuiTransactionHandler(ctx, clients.SuiClient))
+	//http.HandleFunc("/eth/balance", EthBalanceCheckHandler(ctx, clients.EthClient))
+	http.HandleFunc("/eth/transactions", GetEthTransactionHandler(clients.EtherscanAPIClient))
 }
