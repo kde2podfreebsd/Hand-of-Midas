@@ -1,11 +1,11 @@
 package eth
 
 import (
+	"analytics/internal/token"
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum/log"
-	etherscan "github.com/nanmu42/etherscan-api"
 	"io"
+	"log"
 	"math"
 	"net/http"
 	"net/url"
@@ -49,17 +49,27 @@ type ExtendedTransaction struct {
 	EtherscanLink   string  `json:"etherscanLink"`
 }
 
-func GetTransactionHistory(
-	client *etherscan.Client,
-	address string,
-) (*[]ExtendedTransaction, error) {
+func GetTransactionHistory(address string) (*[]ExtendedTransaction, error) {
+	rawTransactions, err := getRawTransactions(address)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get raw transaction history: %w", err)
+	}
+	transactions, err := restructureResult(*rawTransactions, address)
+	if err != nil {
+		return nil, fmt.Errorf("failed to ")
+	}
+
+	return transactions, nil
+}
+
+func getRawTransactions(address string) (*[]Transaction, error) {
 	url, err := url.Parse(baseEtherscanAPIUrl)
 	if err != nil {
 		return nil, fmt.Errorf("error on url parsing: %w", err)
 	}
 	//TODO: Take last block
 	endblock := 22276735
-	etherscanApiKey := os.Getenv("APIKEY")
+	etherscanApiKey := os.Getenv("ETHERSCAN_APIKEY")
 
 	q := url.Query()
 	q.Set("chainid", "1")
@@ -67,7 +77,7 @@ func GetTransactionHistory(
 	q.Set("action", "tokentx")
 	q.Set("address", address)
 	q.Set("page", "1")
-	q.Set("offset", "100")
+	q.Set("offset", "300")
 	q.Set("startblock", "0")
 	q.Set("endblock", strconv.Itoa(endblock))
 	q.Set("sort", "asc")
@@ -92,19 +102,16 @@ func GetTransactionHistory(
 		return nil, fmt.Errorf(
 			"error from API Etherscan: %s - %s", etherscanResponse.Status, etherscanResponse.Message)
 	}
-	transactions, err := restructureResult(etherscanResponse, address)
-	if err != nil {
-		return nil, fmt.Errorf("failed to ")
-	}
-	return transactions, nil
+
+	return &etherscanResponse.Result, nil
 }
 
 func restructureResult(
-	etherscanResponse EtherscanResponse,
+	rawTransactions []Transaction,
 	address string,
 ) (*[]ExtendedTransaction, error) {
-	extendedTransactions := make([]ExtendedTransaction, len(etherscanResponse.Result))
-	for i, tx := range etherscanResponse.Result {
+	extendedTransactions := make([]ExtendedTransaction, len(rawTransactions))
+	for i, tx := range rawTransactions {
 		extendedTransactions[i].TimeStamp = tx.TimeStamp
 		extendedTransactions[i].Hash = tx.Hash
 		extendedTransactions[i].From = tx.From
@@ -128,13 +135,13 @@ func restructureResult(
 			decimal, err := strconv.Atoi(tx.TokenDecimal)
 			if err != nil {
 				extendedTransactions[i].FormattedValue = -1
-				log.Error("failed to format value for %s: %цw", tx.Hash, err)
+				log.Printf("failed to format value for %s: %цw", tx.Hash, err)
 				continue
 			}
 			valueFloat, err := strconv.ParseFloat(tx.Value, 64)
 			if err != nil {
 				extendedTransactions[i].FormattedValue = -1
-				log.Error("failed to format value for %s: %w", tx.Hash, err)
+				log.Printf("failed to format value for %s: %w\n", tx.Hash, err)
 				continue
 			}
 			power := float64(-decimal)
@@ -143,5 +150,33 @@ func restructureResult(
 			extendedTransactions[i].FormattedValue, _ = strconv.ParseFloat(tx.Value, 64)
 		}
 	}
+
 	return &extendedTransactions, nil
+}
+
+func GetFullTokenListFromTransaction(address string) (map[string]token.Token, error) {
+	rawTransactions, err := getRawTransactions(address)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ")
+	}
+	result := make(map[string]token.Token)
+	for _, tx := range *rawTransactions {
+		_, ok := result[tx.ContractAddress]
+		if !ok {
+			val, err := strconv.Atoi(tx.TokenDecimal)
+			if err != nil {
+				result[tx.ContractAddress] = token.Token{
+					TokenName: tx.TokenName,
+					Decimal:   0,
+				}
+				continue
+			}
+			result[tx.ContractAddress] = token.Token{
+				TokenName: tx.TokenName,
+				Decimal:   val,
+			}
+		}
+	}
+
+	return result, nil
 }
