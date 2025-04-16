@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 from typing import List, Callable
 from llmAgents.database.mongodb.telegram_posts import TelegramPostConnector
+from llmAgents.llm.chatgpt_summary import ChatGPTSummaryNewsService
 import pytz
 from dotenv import load_dotenv
 from llmAgents.logger.logger import setup_logger
@@ -25,6 +26,7 @@ class UserAgentCore:
         self.db_uri = f"mongodb://{os.getenv('MONGO_INITDB_ROOT_USERNAME')}:{os.getenv('MONGO_INITDB_ROOT_PASSWORD')}@localhost:27017/"
         self.db_name = "news"
         self.connector = TelegramPostConnector(self.db_uri, self.db_name)
+        self.llm = ChatGPTSummaryNewsService()
 
         if not os.path.exists(self.sessions_dirPath):
             os.makedirs(self.sessions_dirPath)
@@ -68,12 +70,15 @@ class UserAgentCore:
                     if message.text is None:
                         continue
 
+                    tags_list = await self.llm.generate_news_tags(news=message.text)
+
                     post_data = {
                         "channel": channel_data,
                         "message_id": message.id,
                         "date": message.date,
                         "text": message.text,
                         "views": message.views,
+                        "tags": tags_list,
                     }
 
                     posts_data.append(post_data)
