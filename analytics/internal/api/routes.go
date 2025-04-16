@@ -16,7 +16,7 @@ func SetupRoutes(
 	mux.HandleFunc("/sui/balance", SuiBalanceCheckHandler(ctx, clients.SuiClient))
 	mux.HandleFunc("/sui/objects", GetOwnedObjectsHandler(ctx, clients.SuiClient))
 	mux.HandleFunc("/sui/transaction", GetSuiTransactionHandler(ctx, clients.SuiClient))
-	//mux.HandleFunc("/eth/balance", EthBalanceCheckHandler(ctx, clients.EthClient))
+	mux.HandleFunc("/eth/balance", EthBalanceCheckHandler(ctx, clients.EthClient))
 	mux.HandleFunc("/eth/transactions", GetEthTransactionHandler(clients.EtherscanAPIClient))
 	return mux
 }

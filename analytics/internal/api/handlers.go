@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/nanmu42/etherscan-api"
 	"net/http"
 
@@ -70,22 +71,22 @@ func GetSuiTransactionHandler(ctx context.Context, client sui.ISuiAPI) http.Hand
 	}
 }
 
-//func EthBalanceCheckHandler(ctx context.Context, client *etherscan.Client) http.HandlerFunc {
-//	return func(w http.ResponseWriter, r *http.Request) {
-//		id := r.URL.Query().Get("id")
-//		if id == "" {
-//			http.Error(w, "missing wallet address", http.StatusBadRequest)
-//			return
-//		}
-//		data, err := e.GetBalance(ctx, client, id)
-//		if err != nil {
-//			http.Error(w, err.Error(), http.StatusBadRequest)
-//			return
-//		}
-//		w.Header().Set("Content-Type", "application/json")
-//		json.NewEncoder(w).Encode(data)
-//	}
-//}
+func EthBalanceCheckHandler(ctx context.Context, client *ethclient.Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			http.Error(w, "missing wallet address", http.StatusBadRequest)
+			return
+		}
+		data, err := e.GetBalance(ctx, client, id)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(data)
+	}
+}
 
 func GetEthTransactionHandler(client *etherscan.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
