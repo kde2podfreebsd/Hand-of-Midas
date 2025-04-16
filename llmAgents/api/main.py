@@ -3,7 +3,9 @@ from llmAgents.api.router import (
     chat_router,
     investment_router,
     pools_router,
-    user_address_router
+    user_address_router,
+    transactions_route,
+    portfolio_route
 )
 
 from fastapi import FastAPI
@@ -30,6 +32,8 @@ def create_app() -> FastAPI:
     app.include_router(investment_router.router)
     app.include_router(pools_router.router)
     app.include_router(user_address_router.router)
+    app.include_router(transactions_route.router)
+    app.include_router(portfolio_route.router)
 
     return app
 

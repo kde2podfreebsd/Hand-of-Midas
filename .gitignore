@@ -47,6 +47,10 @@ coverage.xml
 .pytest_cache/
 cover/
 
+llmAgents/scrapper/news/telegram/sessions/
+llmAgents/scrapper/news/telegram/sessions/*
+llmAgents/scrapper/news/telegram/sessions/test_session.session
+
 *.mo
 *.pot
 
@@ -110,6 +114,7 @@ cython_debug/
 
 .idea
 node_modules/
+frontend/node_modules/
 *.env
 *.dec
 dist/

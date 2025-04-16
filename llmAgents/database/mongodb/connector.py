@@ -1,6 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.errors import OperationFailure
-from llmAgents.logger.logger import setup_logger
+from llmAgents.logger import setup_logger
 from llmAgents.database.mongodb.base import AbstractMongoDBConnector
 
 class BaseMongoDBConnector(AbstractMongoDBConnector):

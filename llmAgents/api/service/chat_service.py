@@ -1,4 +1,4 @@
-from llmAgents.llm.chatgpt_service import ChatGPTService
+from llmAgents.llm.llm_service.chat_llm import ChatGPTService
 from llmAgents.database.mongodb.chat_history import ChatHistoryConnector
 
 class ChatService:

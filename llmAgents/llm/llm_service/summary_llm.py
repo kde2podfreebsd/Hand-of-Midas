@@ -1,11 +1,15 @@
-from llmAgents.llm.chatgpt_service import ChatGPTService as BaseChatGPTService
+from llmAgents.llm.llm_service.chat_llm import ChatGPTService as BaseChatGPTService
 
 class ChatGPTSummaryNewsService(BaseChatGPTService):
-    async def generate_news_tags(self, news: str) -> str:
+    async def generate_news_tags(self, news: str):
         prompt = ("Прочитай новость и верни теги новости. Например: #crypto#btc#inflation."
-                  " Не пиши ничего лишнего, только строку из тегов\nНовость: ")
+                  " Не пиши ничего лишнего, только строку из тегов"
+                  "Если новость не про de-fi, финансы, крипту, политику, или смежные с этим новости вместо тегов верни false\nНовость: ")
         prompt += news
         tags = await self.send_message("news-tag", prompt)
+        if tags == "false":
+            return False
+
         tags_list = tags.split('#')
         return tags_list[1:]
 

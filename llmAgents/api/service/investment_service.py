@@ -1,5 +1,5 @@
 from llmAgents.database.mongodb.investment import InvestmentSurveyConnector
-from llmAgents.llm.chatgpt_survey import ChatGPTSurveyService
+from llmAgents.llm.llm_service.survey_llm import ChatGPTSurveyService
 from llmAgents.api.schema.investment_survey import *
 from typing import List
 

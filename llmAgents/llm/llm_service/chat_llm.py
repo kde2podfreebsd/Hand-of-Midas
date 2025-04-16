@@ -1,8 +1,8 @@
 import openai
 from datetime import datetime
 from llmAgents.database.mongodb.chat_history import ChatHistoryConnector
-import os
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
 
@@ -24,7 +24,9 @@ class ChatGPTService:
 
     async def send_message(self, user_id: str, message: str) -> str:
         try:
-            client = openai.OpenAI(api_key=self.openai_api_key)
+            client = openai.OpenAI(
+                api_key=self.openai_api_key
+            )
 
             response = client.chat.completions.create(
                 model=self.model,
