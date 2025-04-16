@@ -1,5 +1,5 @@
 {
-    "eth": [
+    "Ethereum": [
         {
             "coin": "ETH",
             "amount": 1.6,
@@ -166,7 +166,7 @@
             ]
         }
     ],
-    "sui": [
+    "SUI": [
         {
             "coin": "SUI",
             "amount": 1.9,
