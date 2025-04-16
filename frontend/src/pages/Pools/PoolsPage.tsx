@@ -1,19 +1,21 @@
 import { Col, Row } from "antd";
 import { useEffect, useState } from "react";
+import { api } from "../../api";
+import { GetPoolsResponse } from "../../api/pool/get-pools";
 
 
 export const PoolsPage = () => {
-  const [pools, setPools] = useState([]);
+  const [pools, setPools] = useState<GetPoolsResponse>([]);
+  const [loading, setLoading] = useState(true);
+
+  void loading;
 
   useEffect(() => {
-    fetch('http://0.0.0.0:8000/pools?source=*')
-      .then(response => response.json())
-      .then(rows => {
-        setPools(rows)
-      })
+    api.pool.list().then(pools => {
+      setPools(pools);
+      setLoading(false);
+    })
   }, [])
-
-  console.log(pools)
 
 
   return (
@@ -96,47 +98,47 @@ export const PoolsPage = () => {
           border: '1px solid #F0F0F0',
         }}
       >
-        {pools.map((_, i) => {
+        {pools.map((pool, i) => {
           return <div key={i} style={{ width: '100%', border: '1px solid #F0F0F0', height: '8vh' }}>
              <Row style={{ width: '100%', height: '100%' }}>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                  Пул
+                  {pool.pool_name}
                 </div>
               </Col>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                  Протокол
+                  {pool.protocol}
                 </div>
               </Col>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                  Fee
+                  {Number(pool.fee).toFixed(2)}
                 </div>
               </Col>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                  TVL
+                  {Number(pool.tvl).toFixed(2)}
                 </div>
               </Col>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                  APR
+                {Number(pool.apr).toFixed(2)}
                 </div>
               </Col>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                  VOL (1d)
+                  {Number(pool.vol_1d).toFixed(2)}
                 </div>
               </Col>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                  VOL (30d)
+                {Number(pool.vol_30d).toFixed(2)}
                 </div>
               </Col>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                  VOL/TVL
+                {Number(pool.vol_tvl_ratio).toFixed(2)}
                 </div>
               </Col>
             </Row>

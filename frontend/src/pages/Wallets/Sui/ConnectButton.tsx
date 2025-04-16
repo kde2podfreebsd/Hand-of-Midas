@@ -1,11 +1,17 @@
 import { ConnectModal, useWallet } from "@suiet/wallet-kit";
 import { Button } from "antd";
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { api } from "../../../api";
+import { Protocols } from "../../../constants";
+import { UserContext } from "../../../providers/UserProvider";
 
 export const ConnectSuiButton = () => {
   const sui = useWallet();
-
   const disabled = Boolean(sui.address);
+
+  const { user } = useContext(UserContext);
+
+  const [showModal, setShowModal] = useState(false)
 
   const handleConnect = () => {
     if (!sui.address) {
@@ -13,7 +19,13 @@ export const ConnectSuiButton = () => {
     }
   }
 
-  const [showModal, setShowModal] = useState(false)
+  useEffect(() => {
+    if (user && sui.address) {
+      api.user.sync(Protocols.SUI, sui.address, user)
+    }
+  }, [sui.address, user])
+
+  
 
   return (
     <ConnectModal

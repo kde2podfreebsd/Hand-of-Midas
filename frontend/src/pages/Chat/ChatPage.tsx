@@ -1,121 +1,75 @@
 import { ArrowUpOutlined } from "@ant-design/icons";
-import { Button, Flex, Space, Typography, message } from "antd";
-// import DOMPurify from 'dompurify';
-// import { marked } from "marked";
-import { useEffect, useRef, useState } from "react";
+import { Button, Flex, Space, Typography } from "antd";
+import { useContext, useEffect, useRef, useState } from "react";
 import ReactMarkdown from 'react-markdown';
+import { api } from "../../api";
+import { Message } from "../../api/chat/types";
 import { WithLoader } from "../../components/WithLoader/WithLoader";
+import { UserContext } from "../../providers/UserProvider";
 
-
-type UserMessage = {
-  role: 'user',
-  content: string;
-  timestamp?: string;
-}
-
-type AssistantMessage = {
-  role: 'assistant',
-  content: string;
-  timestamp?: string;
-}
-
-type Message = UserMessage | AssistantMessage;
-
-// Пример сервиса для работы с API (перенесите в отдельный файл)
-const api = {
-  getChatHistory: async (): Promise<Message[]> => {
-    // Здесь должен быть реальный API-вызов
-    return [];
-  },
-  
-  sendMessage: async (newMessage: Message): Promise<Message> => {
-    void newMessage;
-
-    // Здесь должен быть реальный API-вызов
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve({
-          role: 'assistant',
-          content: `# Пример стандартного ответа ассистента
-
-Здравствуйте! 😊
-
-Ниже представлен пример развернутого ответа, который иллюстрирует разнообразие возможностей форматирования Markdown. Этот пример включает в себя заголовки, списки, таблицы, блоки кода и другие элементы разметки, чтобы вы могли увидеть, как может выглядеть полноценный ответ ассистента. Такой формат может быть особенно полезен, когда необходимо структурировать длинный или сложный текст.
-
-## Введение
-
-В этой секции представлены основные компоненты, которые вы можете использовать для создания информативного и структурированного ответа. Вот некоторые ключевые элементы:
-
-- **Заголовки** – используются для разделения текста на логические секции.
-- **Списки** – позволяют структурировать информацию, делая ее более читабельной.
-- **Таблицы** – помогают отображать данные в организованной форме.
-- **Блоки кода** – используются для демонстрации примеров программного кода.
-- **Смайлики** – добавляют эмоциональную окраску и делают текст более дружелюбным. 😄
-
-Эти элементы позволяют сделать ответ не только информативным, но и визуально привлекательным для пользователя.
-
-## Пример таблицы
-
-Ниже представлена таблица с примерными данными. Таблицы удобны для представления сводной информации в виде строк и столбцов:
-
-| **Параметр**   | **Описание**                     | **Пример значения**  |
-|----------------|-----------------------------------|----------------------|
-| Имя            | Имя пользователя                  | Иван                 |
-| Возраст        | Возраст пользователя              | 29 лет               |
-| Статус         | Текущий статус или позиция        | Активный пользователь|
-
-Эта таблица демонстрирует, как можно структурировать данные для лучшего восприятия.`,
-          timestamp: new Date().toISOString()
-        });
-      }, 1000);
-    });
-  }
-};
+const messagesPerPage = 20;
 
 export const ChatPage = () => {
+  const { user } = useContext(UserContext)
+
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<(UserMessage | AssistantMessage)[]>([]);
+  const [page, setPage] = useState(1);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Загрузка истории сообщений
-  useEffect(() => {
-    const loadHistory = async () => {
-      try {
-        setIsLoading(true);
-        const history = await api.getChatHistory();
+  const appendMessage = (message: Message) => {
+    setMessages((prev) => {
+      const current = [...prev];
 
-        const sanitizedHistory: (UserMessage | AssistantMessage)[] = []
-
-        for (const message of history) {
-          if (message.role === 'user') {
-            sanitizedHistory.push(message)
-          }
-
-          if (message.role === 'assistant') {
-            // message.content = DOMPurify.sanitize(await marked(message.content));
-            // sanitizedHistory.push(message);
-          }
-        }
-
-        setMessages(history);
-      } catch {
-        message.error('Не удалось загрузить историю сообщений');
-      } finally {
-        setIsLoading(false);
+      if (prev.length >= messagesPerPage) {
+        current.shift();
       }
-    };
-    
-    loadHistory();
-  }, []);
 
-  // Прокрутка к последнему сообщению
-  useEffect(() => {
+      current.push(message);
+
+      return current;
+    })
+  }
+
+  const loadPage = async (userId: string, page: number): Promise<void> => {
+    setIsLoading(true);
+    const data = await api.chat.messages(userId, page);
+    const messages = data.entries.reverse().flatMap(entry => entry.messages.reverse());
+
+    setMessages(messages);
+    setIsLoading(false);
+  }
+
+  const sendMessage = async (userId: string, message: string) => {
+    const userMessage = {
+      role: 'user',
+      content: message,
+      timestamp: new Date().toISOString(),
+    } satisfies Message;
+
+    appendMessage(userMessage);
+    appendMessage(await api.chat.sendMessage(userId, message));
+  }
+
+  const scrollBottom = () => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
+  }
+
+  // Первичная загрузка истории
+  useEffect(() => {
+    if (user && !messages.length) {
+      loadPage(user, page)
+    }
+  }, [messages.length, page, user])
+
+  // Прокрутка к последнему сообщению при изменении массива сообщений
+  useEffect(() => {
+    scrollBottom()
   }, [messages]);
 
   // Автоматическое изменение высоты textarea
@@ -129,28 +83,9 @@ export const ChatPage = () => {
   const handleSendMessage = async () => {
     if (!input.trim()) return;
 
-    const newUserMessage: Message = {
-      role: 'user',
-      content: input.trim(),
-      timestamp: new Date().toISOString()
-    };
-
-    try {
-      setMessages(prev => [...prev, newUserMessage]);
+    if (user) {
       setInput('');
-
-      // Отправляем сообщение на сервер и получаем ответ
-      const response = await api.sendMessage(newUserMessage);
-
-      // Модифицируем формат контента
-      // response.content = DOMPurify.sanitize(await marked(response.content));
-
-      setMessages(prev => [...prev, response]);
-
-    } catch {
-      message.error('Ошибка при отправке сообщения');
-      // Откатываем добавление пользовательского сообщения в случае ошибки
-      setMessages(prev => prev.filter(msg => msg.role !== 'user' || msg.content !== newUserMessage.content));
+      await sendMessage(user, input);
     }
   };
 
@@ -169,35 +104,35 @@ export const ChatPage = () => {
           ref={messagesContainerRef}
           style={{
             width: '100%',
-            height: 'calc(100% - 150px)',
+            height: 'calc(100% - 165px)',
             overflowY: 'auto',
-            padding: '40px 40px 25vh 40px',
             scrollBehavior: 'smooth',
+            padding: '0 17.5%'
           }}
         >
-          <Flex vertical gap={20}>
+          <Flex vertical>
             {messages.map((msg, index) => {
               return (
                 <Flex
                   key={index}
-                  justify={msg.role === 'user' ? 'flex-end' : 'center'}
-                  style={{ width: '100%', }}
+                  justify={msg.role === 'user' ? 'flex-end' : undefined}
+                  style={{ width: '100%' }}
                 >
                   <div style={{
                     backgroundColor: msg.role === 'user' ? '#F4F4F4' : 'white',
                     borderRadius: 20,
-                    maxWidth:  '60%',
+                    maxWidth: msg.role === 'user' ? '70%' : '100%',
                     padding: '12px 16px',
-                    margin: '4px 0',
+                    margin: msg.role === 'user' ? '4px 0' : '4px auto',
+                    textAlign: msg.role === 'assistant' ? 'left' : 'right',
                   }}>
                     <Typography.Paragraph 
-                      style={{ marginBottom: 0 }}
+                      style={{ marginBottom: 0, wordBreak: 'break-word' }}
                     >
                       {msg.role === 'assistant' && (
                         <ReactMarkdown>
                           {msg.content}
                         </ReactMarkdown>
-                        // <div dangerouslySetInnerHTML={{ __html: msg.content }}/>
                       )}
                       {msg.role === 'user' && msg.content}
                     </Typography.Paragraph>
@@ -215,9 +150,9 @@ export const ChatPage = () => {
         <div
           style={{
             zIndex: 10,
-            width: '60%',
+            width: '65%',
             position: 'absolute',
-            left: '20%',
+            left: '17.5%',
             transition: 'all 0.5s',
             ...(!messages.length && {
               bottom: '45%',

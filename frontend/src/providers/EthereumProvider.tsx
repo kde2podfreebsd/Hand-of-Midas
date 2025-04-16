@@ -2,8 +2,11 @@ import { EthersAdapter } from "@reown/appkit-adapter-ethers";
 import { mainnet, sepolia } from "@reown/appkit/networks";
 import { createAppKit } from "@reown/appkit/react";
 import { ethers } from "ethers";
-import { createContext, FC, ReactNode, useEffect, useState } from "react";
+import { createContext, FC, ReactNode, useContext, useEffect, useState } from "react";
+import { api } from "../api";
+import { Protocols } from "../constants";
 import { ICoinProvider } from "./types";
+import { UserContext } from "./UserProvider";
 
  
 interface IEthereumContext extends ICoinProvider {
@@ -21,6 +24,8 @@ export const EthereumContext = createContext<IEthereumContext>({
 })
 
 export const EthereumProvider: FC<{ children: ReactNode }> = ({ children }) => {
+  const { user } = useContext(UserContext)
+
   const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
   const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
   const [address, setAddress] = useState<string | null>(null);
@@ -45,6 +50,12 @@ export const EthereumProvider: FC<{ children: ReactNode }> = ({ children }) => {
       analytics: true,
     },
   });
+
+  useEffect(() => {
+    if (user && address) {
+      api.user.sync(Protocols.ETH, address, user)
+    }
+  }, [address, user])
 
   useEffect(() => {
     modal.subscribeEvents((event) => {
