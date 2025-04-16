@@ -1,4 +1,4 @@
-from llmAgents.llm.chatgpt_service import ChatGPTService as BaseChatGPTService
+from llmAgents.llm.llm_service.chat_llm import ChatGPTService as BaseChatGPTService
 
 class ChatGPTSurveyService(BaseChatGPTService):
     async def generate_summary(self, questions_and_answers: list) -> str:

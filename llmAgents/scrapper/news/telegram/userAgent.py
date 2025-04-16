@@ -3,10 +3,10 @@ import os
 from datetime import datetime
 from typing import List, Callable
 from llmAgents.database.mongodb.telegram_posts import TelegramPostConnector
-from llmAgents.llm.chatgpt_summary import ChatGPTSummaryNewsService
+from llmAgents.llm.llm_service.summary_llm import ChatGPTSummaryNewsService
 import pytz
 from dotenv import load_dotenv
-from llmAgents.logger.logger import setup_logger
+from llmAgents.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -71,6 +71,10 @@ class UserAgentCore:
                         continue
 
                     tags_list = await self.llm.generate_news_tags(news=message.text)
+
+                    if tags_list == False:
+                        print("FALSE, SKIP NEWS")
+                        continue
 
                     post_data = {
                         "channel": channel_data,
@@ -155,7 +159,7 @@ if __name__ == "__main__":
         core = UserAgentCore("test_session", int(os.getenv('APP_ID')), os.getenv('API_HASH'))
 
         for channel in channels_to_monitor:
-            await core.get_channel_history(channel_username=channel, end_date=datetime(2025, 3, 1, tzinfo=pytz.UTC))
+            await core.get_channel_history(channel_username=channel, end_date=datetime(2025, 4, 1, tzinfo=pytz.UTC))
 
         async def message_callback(message_data):
             logger.info(f"New message in {message_data}:")

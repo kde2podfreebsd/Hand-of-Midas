@@ -1,5 +1,5 @@
 from llmAgents.database.mongodb.telegram_posts import TelegramPostConnector
-from llmAgents.llm.chatgpt_summary import ChatGPTSummaryNewsService
+from llmAgents.llm.llm_service.summary_llm import ChatGPTSummaryNewsService
 
 
 class PostService:
