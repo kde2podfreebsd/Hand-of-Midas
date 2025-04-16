@@ -1,5 +1,5 @@
 {
-  "name": "vite-project",
+  "name": "antd-demo",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,11 +10,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ant-design/colors": "^8.0.0",
+    "@ant-design/icons": "^5.6.1",
+    "@mysten/sui": "^1.27.0",
     "@reown/appkit": "^1.7.2",
     "@reown/appkit-adapter-ethers": "^1.7.2",
+    "@suiet/wallet-kit": "^0.3.4",
+    "antd": "^5.24.6",
+    "antd-style": "^3.7.1",
+    "dompurify": "^3.2.5",
     "ethers": "^6.13.5",
+    "marked": "^15.0.8",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

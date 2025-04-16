@@ -1,0 +1,14 @@
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Скрываем полосу прокрутки для WebKit-браузеров (Chrome, Safari, Edge) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Скрываем полосу прокрутки для Firefox */
+.no-scrollbar {
+  scrollbar-width: none;
+}
