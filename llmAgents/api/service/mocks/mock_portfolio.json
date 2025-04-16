@@ -239,5 +239,8 @@
                 "0x58d9b7cd3b0f00b87c6e37052b3c9d2bcfef6ab8"
             ]
         }
-    ]
+    ],
+    "total_balance_eth": 6500,
+    "total_balance_sui": 2975,
+    "total_balance": 9475
 }
