@@ -4,14 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/nanmu42/etherscan-api"
 	"net/http"
 
 	e "analytics/internal/eth"
 	s "analytics/internal/sui"
 
 	"github.com/block-vision/sui-go-sdk/sui"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 func Pong() http.HandlerFunc {
@@ -88,14 +87,14 @@ func EthBalanceCheckHandler(ctx context.Context, client *ethclient.Client) http.
 	}
 }
 
-func GetEthTransactionHandler(client *etherscan.Client) http.HandlerFunc {
+func GetEthTransactionHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Query().Get("id")
 		if id == "" {
 			http.Error(w, "missing wallet address", http.StatusBadRequest)
 			return
 		}
-		data, err := e.GetTransactionHistory(client, id)
+		data, err := e.GetTransactionHistory(id)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

@@ -21,7 +21,7 @@ type Clients struct {
 }
 
 func CreateClients(ctx context.Context) (*Clients, error) {
-	etherscanApiKey := os.Getenv("APIKEY")
+	etherscanApiKey := os.Getenv("ETHERSCAN_APIKEY")
 	suiClient := sui.NewSuiClient(constant.BvTestnetEndpoint)
 	etherscanAPIClient := etherscan.New(etherscan.Mainnet, etherscanApiKey)
 	ethClient, err := ethclient.DialContext(context.Background(), ethNodeURL)

@@ -13,11 +13,11 @@ func SetupRoutes(
 ) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/analytics/ping", Pong())
-	mux.HandleFunc("/sui/balance", SuiBalanceCheckHandler(ctx, clients.SuiClient))
-	mux.HandleFunc("/sui/objects", GetOwnedObjectsHandler(ctx, clients.SuiClient))
-	mux.HandleFunc("/sui/transaction", GetSuiTransactionHandler(ctx, clients.SuiClient))
-	mux.HandleFunc("/eth/balance", EthBalanceCheckHandler(ctx, clients.EthClient))
-	mux.HandleFunc("/eth/transactions", GetEthTransactionHandler(clients.EtherscanAPIClient))
+	mux.HandleFunc("/analytics/sui/balance", SuiBalanceCheckHandler(ctx, clients.SuiClient))       // Не трогать
+	mux.HandleFunc("/analytics/sui/objects", GetOwnedObjectsHandler(ctx, clients.SuiClient))       // Не трогать
+	mux.HandleFunc("/analytics/sui/transaction", GetSuiTransactionHandler(ctx, clients.SuiClient)) // Не трогать
+	mux.HandleFunc("/analytics/eth/balance", EthBalanceCheckHandler(ctx, clients.EthClient))
+	mux.HandleFunc("/analytics/eth/transactions", GetEthTransactionHandler())
 	return mux
 }
 
