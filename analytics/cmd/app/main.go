@@ -15,10 +15,11 @@ func startServer(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create clients: %w", err)
 	}
-	api.SetupRoutes(ctx, *clients)
+	mux := api.SetupRoutes(ctx, *clients)
+	handler := api.CORSMiddleware(mux)
 	port := "8080"
 	log.Printf("Server started on port %s\n", port)
-	log.Fatal(http.ListenAndServe("0.0.0.0:"+port, nil))
+	log.Fatal(http.ListenAndServe("0.0.0.0:"+port, handler))
 	return nil
 }
 

@@ -128,7 +128,7 @@ func restructureResult(
 			decimal, err := strconv.Atoi(tx.TokenDecimal)
 			if err != nil {
 				extendedTransactions[i].FormattedValue = -1
-				log.Error("failed to format value for %s: %w", tx.Hash, err)
+				log.Error("failed to format value for %s: %цw", tx.Hash, err)
 				continue
 			}
 			valueFloat, err := strconv.ParseFloat(tx.Value, 64)
