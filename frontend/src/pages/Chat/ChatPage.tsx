@@ -2,6 +2,7 @@ import { ArrowUpOutlined } from "@ant-design/icons";
 import { Button, Flex, Space, Typography } from "antd";
 import { useContext, useEffect, useRef, useState } from "react";
 import ReactMarkdown from 'react-markdown';
+import RehypeRaw from 'rehype-raw';
 import { api } from "../../api";
 import { Message } from "../../api/chat/types";
 import { WithLoader } from "../../components/WithLoader/WithLoader";
@@ -13,7 +14,8 @@ export const ChatPage = () => {
   const { user } = useContext(UserContext)
 
   const [input, setInput] = useState('');
-  const [page, setPage] = useState(1);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [page, _setPage] = useState(1);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -24,7 +26,8 @@ export const ChatPage = () => {
     setMessages((prev) => {
       const current = [...prev];
 
-      if (prev.length >= messagesPerPage) {
+      if (prev.length >= messagesPerPage * 2) {
+        current.shift();
         current.shift();
       }
 
@@ -107,40 +110,63 @@ export const ChatPage = () => {
             height: 'calc(100% - 165px)',
             overflowY: 'auto',
             scrollBehavior: 'smooth',
-            padding: '0 17.5%'
+            padding: '0 17.5% 30px 17.5%'
           }}
         >
           <Flex vertical>
             {messages.map((msg, index) => {
               return (
-                <Flex
-                  key={index}
-                  justify={msg.role === 'user' ? 'flex-end' : undefined}
-                  style={{ width: '100%' }}
-                >
-                  <div style={{
-                    backgroundColor: msg.role === 'user' ? '#F4F4F4' : 'white',
-                    borderRadius: 20,
-                    maxWidth: msg.role === 'user' ? '70%' : '100%',
-                    padding: '12px 16px',
-                    margin: msg.role === 'user' ? '4px 0' : '4px auto',
-                    textAlign: msg.role === 'assistant' ? 'left' : 'right',
-                  }}>
-                    <Typography.Paragraph 
-                      style={{ marginBottom: 0, wordBreak: 'break-word' }}
-                    >
-                      {msg.role === 'assistant' && (
-                        <ReactMarkdown>
-                          {msg.content}
-                        </ReactMarkdown>
-                      )}
-                      {msg.role === 'user' && msg.content}
-                    </Typography.Paragraph>
-                    <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block' }}>
-                      {new Date(msg.timestamp!).toLocaleTimeString()}
-                    </Typography.Text>
-                  </div>
-                </Flex>
+                <div key={index} style={{
+                  padding: '5px 16px',
+                  width: '100%',
+                }}>
+                  {msg.role === 'assistant' && (
+                    <Flex vertical align='flex-start' justify='center'>
+                      <p
+                        style={{
+                          margin: '0',
+                          wordBreak: 'break-word',
+                        }}
+                      >
+                        <ReactMarkdown rehypePlugins={[RehypeRaw]}>{msg.content}</ReactMarkdown>
+                      </p>
+                      <Typography.Text
+                        type="secondary"
+                        style={{
+                          fontSize: 10,
+                        }}
+                      >
+                        {new Date(msg.timestamp!).toLocaleTimeString()}
+                      </Typography.Text>
+                    </Flex>
+                  )}
+                  {msg.role === 'user' && (
+                    <Flex vertical align='flex-end' justify='center' gap={3}>
+                      <p
+                        style={{
+                          margin: '0',
+                          padding: '12px 22px',
+                          maxWidth: '70%',
+                          minWidth: '100px',
+                          borderRadius: 20,
+                          backgroundColor: '#F4F4F4',
+                          wordBreak: 'break-word',
+                        }}
+                      >
+                        {msg.content}
+                      </p>
+                      <Typography.Text
+                        type="secondary"
+                        style={{
+                          fontSize: 10,
+                          marginRight: '15px',
+                        }}
+                      >
+                        {new Date(msg.timestamp!).toLocaleTimeString()}
+                      </Typography.Text>
+                    </Flex>
+                  )}
+                </div>
               )
             })}
           </Flex>

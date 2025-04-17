@@ -1,7 +1,17 @@
-import { Col, Row } from "antd";
+import { Col, Flex, Row } from "antd";
 import { useEffect, useState } from "react";
 import { api } from "../../api";
 import { GetPoolsResponse } from "../../api/pool/get-pools";
+
+function fmtUsdAmount(num: number): string {
+  if (num >= 1_000_000) {
+    return `$${(num / 1_000_000).toFixed(2).replace(/\.?0+$/, '')}M`;
+  } else if (num >= 1_000) {
+    return `$${(num / 1_000).toFixed(2).replace(/\.?0+$/, '')}K`;
+  } else {
+    return `$${num}`;
+  }
+}
 
 
 export const PoolsPage = () => {
@@ -103,42 +113,67 @@ export const PoolsPage = () => {
              <Row style={{ width: '100%', height: '100%' }}>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                  {pool.pool_name}
+                  <strong>{pool.pool_name}</strong>
                 </div>
               </Col>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                  {pool.protocol}
+                  <Flex
+                    justify="center"
+                    align="center"
+                    style={{
+                      fontSize: 12,
+                      borderRadius: 10,
+                      backgroundColor: '#DBE8FB',
+                      color: '#0080FF',
+                      padding: '5px',
+                    }}
+                  >
+                    {pool.protocol.toLowerCase()}
+                  </Flex>
                 </div>
               </Col>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                  {Number(pool.fee).toFixed(2)}
+                  ${parseFloat(Number(pool.fee).toFixed(2))}
                 </div>
               </Col>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                  {Number(pool.tvl).toFixed(2)}
+                  {fmtUsdAmount(parseInt(pool.tvl))}
                 </div>
               </Col>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                {Number(pool.apr).toFixed(2)}
+                  <Flex
+                    justify="center"
+                    align="center"
+                    style={{
+                      fontSize: 12,
+                      borderRadius: 10,
+                      background: 'linear-gradient(90deg, #6253e1, #04befe)',
+                      minWidth: '40px',
+                      padding: '5px',
+                      color: 'white',
+                    }}
+                  >
+                    {parseFloat(Number(pool.apr).toFixed(2))}%
+                  </Flex>
                 </div>
               </Col>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                  {Number(pool.vol_1d).toFixed(2)}
+                  {fmtUsdAmount(parseInt(pool.vol_1d))}
                 </div>
               </Col>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                {Number(pool.vol_30d).toFixed(2)}
+                  {fmtUsdAmount(parseInt(pool.vol_30d))}
                 </div>
               </Col>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
-                {Number(pool.vol_tvl_ratio).toFixed(2)}
+                  {parseFloat(Number(pool.vol_tvl_ratio).toFixed(2))}
                 </div>
               </Col>
             </Row>
