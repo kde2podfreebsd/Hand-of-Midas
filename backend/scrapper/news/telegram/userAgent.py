@@ -121,20 +121,24 @@ class UserAgentCore:
             message = event.message
             channel = await message.get_chat()
 
-            message_data = {
-                "channel": {
-                    "id": channel.id,
-                    "title": channel.title,
-                    "username": channel.username
-                },
-                "message_id": message.id,
-                "date": message.date,
-                "text": message.text,
-                "views": message.views,
-            }
-            await self.connector.insert_post(message_data)
-            logger.info(f"New message inserted: {message_data}")
-            await callback(message_data)
+            tags_list = await self.llm.generate_news_tags(news=message.text)
+
+            if tags_list != False:
+                message_data = {
+                    "channel": {
+                        "id": channel.id,
+                        "title": channel.title,
+                        "username": channel.username
+                    },
+                    "message_id": message.id,
+                    "date": message.date,
+                    "text": message.text,
+                    "views": message.views,
+                    "tags": tags_list
+                }
+                await self.connector.insert_post(message_data)
+                logger.info(f"New message inserted: {message_data}")
+                await callback(message_data)
 
         logger.info("Starting message monitoring...")
         await self.app.start()
@@ -153,6 +157,9 @@ if __name__ == "__main__":
     channels_to_monitor = [
         "@markettwits",
         "@ftsec",
+        "@usamarke1",
+        "@banksta",
+        "@etpinvest"
     ]
 
     async def main():

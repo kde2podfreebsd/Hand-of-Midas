@@ -32,6 +32,8 @@ class NewsMCP:
 
             if posts_text == '':
                 return False
+
+            print("\n\n!!!!POSTS TEXT:", posts_text)
             summary = await self.summary_llm.generate_news_summary(news_text=posts_text)
             return summary
 

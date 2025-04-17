@@ -1,4 +1,5 @@
 
+
 class DuneMCP:
     def __init__(self):
         self.dune_dashboards = {
@@ -149,3 +150,6 @@ class DuneMCP:
                 "api_id": 2394053,
             },
         }
+
+    def get_dashboard_keys(self):
+        return list(self.dune_dashboards.keys())
