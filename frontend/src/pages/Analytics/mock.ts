@@ -114,14 +114,71 @@ export const externalIframeGroups = {
 };
 
 export const internalIframeGroups = {
-  "Внутренние метрики": [
+  "Распределение активов": [
     {
-      title: "Внутренний анализ объема",
-      iframes: ["https://dune.com/embeds/340977/649408"],
-    },
-    {
-      title: "Внутренняя статистика пулов",
-      iframes: ["https://dune.com/embeds/148110/292148"],
+      title: "ETH",
+      iframes: [
+        "https://datalens.yandex/r1gjizg15zzud",
+        "https://datalens.yandex/oydgqqreteu8a",
+      ],
     },
   ],
+  "Прибыль/убытки": [
+    {
+      title: "Общая сумма прибыли/убытков",
+      iframes: ["https://datalens.yandex/1bqxfg1dwdrqn"],
+    },
+    {
+      title: "Прибыль/убытки по токенам",
+      iframes: ["https://datalens.yandex/pzemccqmeffmb"],
+    },
+  ],
+  "Объем транзакций": [
+    {
+      title: "Общий объем транзакций",
+      iframes: ["https://datalens.yandex/jt8jvgj1y9si5"],
+    },
+    {
+      title: "Объем транзакций по токенам",
+      iframes: ["https://datalens.yandex/2cr3ox2dl1fco"],
+    },
+  ],
+  "Количество транзакций": [
+    {
+      title: "Количество транзакций по дням",
+      iframes: ["https://datalens.yandex/w6lyr06u6evgi"],
+    },
+    {
+      title: "Количество транзакций по дням и токенам",
+      iframes: ["https://datalens.yandex/5fu7fs87d8aar"],
+    },
+    {
+      title: "Общее количество транзакций",
+      iframes: ["https://datalens.yandex/t3ixjttqpmhef"],
+    },
+    {
+      title: "Общее количество транзакций по токенам",
+      iframes: ["https://datalens.yandex/eo3i7ix5ma2g0"],
+    },
+  ],
+  "Доходность инвестиций": [
+    {
+      title: "ROI (общая доходность)",
+      iframes: ["https://datalens.yandex/5fudnt4edfsar"],
+    },
+    {
+      title: "ROI по токенам",
+      iframes: ["https://datalens.yandex/hr6q8gx2r1cm3"],
+    },
+  ],
+  "Средняя стоимость транзакции": [
+    {
+      title: "Средняя стоимость транзакции",
+      iframes: ['https://datalens.yandex/z9oe6cz8bspel']
+    },
+    {
+      title: "Средняя стоимость транзакции - по токенам",
+      iframes: ['https://datalens.yandex/3dsik04p0w0qp']
+    }
+  ]
 };
