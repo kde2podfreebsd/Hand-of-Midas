@@ -17,6 +17,19 @@ class TelegramPostConnector(BaseMongoDBConnector):
         self.logger.info("Collection 'telegram_posts' dropped.")
         return "Collection dropped."
 
+    async def is_exist(self, channel, message_id):
+        collection = self.db["telegram_posts"]
+        existing_post = await collection.find_one({
+            "channel.id": channel,
+            "message_id": message_id
+        })
+        if existing_post:
+            self.logger.info(
+                f"Post already exists: channel_id={channel}, message_id={message_id}")
+            return True
+        else:
+            return False
+
     async def insert_post(self, post_data):
         try:
             collection = self.db["telegram_posts"]

@@ -70,6 +70,11 @@ class UserAgentCore:
                     if message.text is None:
                         continue
 
+                    # status = await self.connector.is_exist(channel=channel.id, message_id=message.id)
+                    #
+                    # if not status:
+                    #     continue
+                    # else:
                     tags_list = await self.llm.generate_news_tags(news=message.text)
 
                     if tags_list == False:
@@ -166,7 +171,7 @@ if __name__ == "__main__":
         core = UserAgentCore("test_session", int(os.getenv('APP_ID')), os.getenv('API_HASH'))
 
         for channel in channels_to_monitor:
-            await core.get_channel_history(channel_username=channel, end_date=datetime(2025, 4, 1, tzinfo=pytz.UTC))
+            await core.get_channel_history(channel_username=channel, end_date=datetime(2025, 4, 10, tzinfo=pytz.UTC))
 
         async def message_callback(message_data):
             logger.info(f"New message in {message_data}:")

@@ -16,13 +16,8 @@ class ChatGPTDuneService(BaseChatGPTService):
         self.dune = DuneClient(os.getenv("DUNE_API_KEY"))
 
     def dune_query(self, dashboard_id: int) -> dict:
-        """
-        Возвращает результат запроса к Dune API в виде чистого Python-словаря.
-        Поддерживает конвертацию объектов pydantic (ResultsResponse, ExecutionResult) и ручную сборку.
-        """
         try:
             resp = self.dune.get_latest_result(dashboard_id)
-            # Pydantic-model support
             if hasattr(resp, 'dict'):
                 return resp.dict()
             elif hasattr(resp, 'to_dict'):
@@ -42,15 +37,14 @@ class ChatGPTDuneService(BaseChatGPTService):
             print(f"⚠️ DuneError for dashboard {dashboard_id}: {e}")
             return {"metadata": {}, "rows": []}
 
-    async def send_message(self, context: str) -> str:
+    async def send_message(self, context: str) -> (str, dict):
         client = openai.OpenAI(api_key=self.openai_api_key)
 
-        # 1) Выбор релевантных дашбордов и необходимых API ID
         all_dashboards = self.dune_mcp.get_dashboard_keys()
         pick_prompt = (
             "Ты — эксперт по DeFi и Dune Analytics.\n"
             "Исходя из контекста запроса, выбери:\n"
-            "1) От 3 до 10 релевантных названий дашбордов из этого списка:\n"
+            "1) От 7 до 15 релевантных названий дашбордов из этого списка:\n"
             f"{json.dumps(all_dashboards, ensure_ascii=False, indent=2)}\n\n"
             "2) От 2 до 3 API ID тех дашбордов, данные которых нужно запросить.\n\n"
             "Ответь строго JSON с полями:\n"
@@ -75,28 +69,25 @@ class ChatGPTDuneService(BaseChatGPTService):
                 for name in relevant[:3]
             ]
 
-        # 2) Маппинг ID → название и фильтрация
-        id_to_name = {
-            info["api_id"]: name
-            for name, info in self.dune_mcp.dune_dashboards.items()
-        }
+        id_to_name = {info["api_id"]: name for name, info in self.dune_mcp.dune_dashboards.items()}
         valid_ids = [i for i in to_query_ids if i in id_to_name]
         if not valid_ids:
             valid_ids = [
                 self.dune_mcp.dune_dashboards[name]["api_id"]
-                for name in relevant[:3]
-                if name in self.dune_mcp.dune_dashboards
+                for name in relevant[:3] if name in self.dune_mcp.dune_dashboards
             ]
 
         analyses = []
+        iframe_dict = {}
         for dashboard_id in valid_ids:
             name = id_to_name[dashboard_id]
             data = self.dune_query(dashboard_id)
+            json_data = json.dumps(data, ensure_ascii=False)
+            truncated_data = json_data if len(json_data) <= 1500 else json_data[:1500]
 
-            # 3) Анализ по каждому дашборду
             analysis_prompt = (
                 f"Ты — аналитик DeFi. Проанализируй данные для дашборда «{name}» (ID={dashboard_id}):\n"
-                f"{json.dumps(data, ensure_ascii=False)}\n\n"
+                f"{truncated_data}\n"
                 "Выведи развёрнутое заключение в Markdown."
             )
             analysis_resp = client.chat.completions.create(
@@ -106,15 +97,10 @@ class ChatGPTDuneService(BaseChatGPTService):
             analysis_text = analysis_resp.choices[0].message.content.strip()
 
             iframe_list = self.dune_mcp.dune_dashboards.get(name, {}).get("iframe", [])
-            iframes = "\n".join(iframe_list)
+            iframe_dict[name] = iframe_list
 
-            analyses.append({
-                "name": name,
-                "analysis": analysis_text,
-                "iframes": iframes
-            })
+            analyses.append({"name": name, "analysis": analysis_text})
 
-        # 4) Сборка финального Markdown-ответа
         md_parts = [
             f"# Анализ по запросу\n> {context}\n",
             "### Релевантные дашборды:\n" + "\n".join(f"- {n}" for n in relevant) + "\n"
@@ -122,22 +108,22 @@ class ChatGPTDuneService(BaseChatGPTService):
         for block in analyses:
             md_parts.extend([
                 f"## {block['name']}\n",
-                block['analysis'] + "\n",
-                block['iframes'] + "\n"
+                block['analysis'] + "\n"
             ])
 
-        return "".join(md_parts)
+        report_md = "".join(md_parts)
+        return report_md, iframe_dict
 
 
-# Пример запуска
 if __name__ == "__main__":
     import asyncio
 
     async def main():
         service = ChatGPTDuneService()
-        output = await service.send_message(
+        report, iframes = await service.send_message(
             "Сравнительный анализ монет на Uniswap, включая объем торгов, участников и количество пулов."
         )
-        print(output)
+        print(report)
+        print("Iframes:", json.dumps(iframes, ensure_ascii=False, indent=2))
 
     asyncio.run(main())
