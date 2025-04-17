@@ -1,4 +1,4 @@
-import { AreaChartOutlined, BankOutlined, DeploymentUnitOutlined, FormOutlined, TransactionOutlined, WechatWorkOutlined } from "@ant-design/icons";
+import { AreaChartOutlined, BankOutlined, DeploymentUnitOutlined, TransactionOutlined, WalletOutlined, WechatWorkOutlined } from "@ant-design/icons";
 import { Menu } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { PAGE_HEADER } from "../../../constants/pages";
@@ -38,7 +38,7 @@ export const NavigationMenu = () => {
       </Menu.Item>
       <Menu.Item
         key={Pages.Wallets}
-        icon={<DeploymentUnitOutlined />}
+        icon={<WalletOutlined />}
         onClick={() => renderPage(Pages.Wallets)}
       >
         {PAGE_HEADER[Pages.Wallets]}
@@ -70,13 +70,6 @@ export const NavigationMenu = () => {
         onClick={() => renderPage(Pages.Analytics)}
       >
         {PAGE_HEADER[Pages.Analytics]}
-      </Menu.Item>
-      <Menu.Item
-        key={Pages.Survey}
-        icon={<FormOutlined />}
-        onClick={() => renderPage(Pages.Survey)}
-      >
-        {PAGE_HEADER[Pages.Survey]}
       </Menu.Item>
     </Menu>
   )

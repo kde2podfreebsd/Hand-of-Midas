@@ -6,6 +6,7 @@ import { getSummaryByTag } from "./news/get-summary-by-tag";
 import { getTags } from "./news/get-tags";
 import { getPools } from "./pool/get-pools";
 import { getPortfolio } from "./portfolio/get-portfolio";
+import { survey } from "./survey/api";
 import { getTransactions } from "./transaction/get-transactions";
 import { syncUser } from "./user/sync-user";
 
@@ -32,4 +33,5 @@ export const api = {
     getNewsByTag: getNewsByTag,
     getSummaryByTag: getSummaryByTag,
   },
+  survey,
 };
