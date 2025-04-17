@@ -1,11 +1,11 @@
-import { API_URL } from "../../constants";
+import { API1_URL } from "../../constants";
 import { Message, SendMessageResponse } from "./types";
 
 export async function sendMessage(
   userId: string,
   message: string
 ): Promise<Message> {
-  const url = new URL(`${API_URL}/chat/send_message`);
+  const url = new URL(`${API1_URL}/chat/send_message`);
 
   url.searchParams.append("user_id", userId);
 

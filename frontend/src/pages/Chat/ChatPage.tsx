@@ -1,26 +1,15 @@
 import { ArrowUpOutlined } from "@ant-design/icons";
 import { Button, Flex, Space, Typography } from "antd";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import ReactMarkdown, { Options } from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
-import remarkGfm from 'remark-gfm';
-import remarkParse from 'remark-parse';
+import ReactMarkdown from 'react-markdown';
+
 import { api } from "../../api";
 import { Message } from "../../api/chat/types";
 import { WithLoader } from "../../components/WithLoader/WithLoader";
+import { reactMarkdownOptions } from "../../constants";
 import { UserContext } from "../../providers/UserProvider";
 
-const options: Readonly<Options> = {
-  rehypePlugins: [
-    rehypeRaw,
-    rehypeSanitize,
-  ],
-  remarkPlugins: [
-    remarkGfm,
-    remarkParse,
-  ],
-}
+
 
 const messagesPerPage = 20;
 
@@ -136,16 +125,16 @@ export const ChatPage = () => {
                 }}>
                   {msg.role === 'assistant' && (
                     <Flex vertical align='flex-start' justify='center'>
-                      <p
+                      {/* <p
                         style={{
                           margin: '0',
                           wordBreak: 'break-word',
                         }}
-                      >
+                      > */}
                           <div className="react-markdown-html">
-                            <ReactMarkdown {...options}>{msg.content}</ReactMarkdown>
+                            <ReactMarkdown {...reactMarkdownOptions}>{msg.content}</ReactMarkdown>
                           </div>
-                      </p>
+                      {/* </p> */}
                       <Typography.Text
                         type="secondary"
                         style={{

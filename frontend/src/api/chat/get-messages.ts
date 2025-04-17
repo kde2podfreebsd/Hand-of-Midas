@@ -1,11 +1,11 @@
-import { API_URL } from "../../constants";
+import { API1_URL } from "../../constants";
 import { GetChatHistoryResponse } from "./types";
 
 export async function getChatMessages(
   userId: string,
   page: number
 ): Promise<GetChatHistoryResponse> {
-  const url = new URL(`${API_URL}/chat/history`);
+  const url = new URL(`${API1_URL}/chat/history`);
 
   url.searchParams.append("user_id", userId);
   url.searchParams.append("page", String(page));
