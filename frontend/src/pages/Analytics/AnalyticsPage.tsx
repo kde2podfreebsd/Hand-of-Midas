@@ -1,11 +1,16 @@
-import { WithLoader } from "../../components/WithLoader/WithLoader";
 
 export const AnalyticsPage = () => {
   return(
-    <WithLoader msMax={1000}>
-      <iframe style={{ width: '100%', height: '45%'}} src="https://dune.com/embeds/3353707/5621898"/>
-      <iframe style={{ width: '50%', height: '45%'}} src="https://dune.com/embeds/3353707/5621898"/>
-      <iframe style={{ width: '50%', height: '45%'}} src="https://dune.com/embeds/3353707/5621898"/>
-    </WithLoader>
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        padding: '20px 40px',
+      }}
+    >
+      <iframe style={{ width: '100%', height: '45%', border: 'none' }} src="https://dune.com/embeds/3359020/5632015"/>
+      <iframe style={{ width: '50%', height: '45%', border: 'none' }} src="https://dune.com/embeds/4589543/7650974/"/>
+      <iframe style={{ width: '50%', height: '45%', border: 'none' }} src="https://dune.com/embeds/4589543/7651009"/>
+    </div>
   );
 }
