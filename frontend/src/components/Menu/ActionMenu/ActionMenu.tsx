@@ -1,5 +1,4 @@
-// ActionMenu.tsx
-import { BulbOutlined, EditOutlined } from "@ant-design/icons";
+import { EditOutlined } from "@ant-design/icons";
 import { Menu } from "antd";
 import { useState } from "react";
 import { SurveyModal } from "../../Survey/SurveyModal";
@@ -26,12 +25,7 @@ export const ActionMenu = () => {
         >
           Провести анкетирование
         </Menu.Item>
-        <Menu.Item
-          key="invest_recommendations"
-          icon={<BulbOutlined />}
-        >
-          Инвестиционные рекомендации
-        </Menu.Item>
+
       </Menu>
 
       <SurveyModal 
@@ -41,3 +35,13 @@ export const ActionMenu = () => {
     </>
   );
 };
+
+
+
+{/* <Menu.Item
+          key="invest_recommendations"
+          icon={<BulbOutlined />}
+          onClick={() => renderPage(Pages.Chat)} // Используем функцию из контекста
+        >
+          Инвестиционные рекомендации
+        </Menu.Item> */}

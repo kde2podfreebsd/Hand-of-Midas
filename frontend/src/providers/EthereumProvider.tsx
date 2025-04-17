@@ -5,13 +5,18 @@ import { ethers } from "ethers";
 import { createContext, FC, ReactNode, useContext, useEffect, useState } from "react";
 import { api } from "../api";
 import { Protocols } from "../constants";
+import { UniswapWrapperABI } from "./abi";
 import { ICoinProvider } from "./types";
 import { UserContext } from "./UserProvider";
 
+const UNISWAP_WRAPPER_ADDRESS = "0xa4c7531a815ffcbb343aa381ae6be677822d7dab";
+const ETH_ADDRESS = "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9";
+const USDT_ADDRESS = "0xaa8e23fb1079ea71e0a56f48a2aa51851d8433d0";
  
 interface IEthereumContext extends ICoinProvider {
   provider: ethers.BrowserProvider | null,
   signer:  ethers.JsonRpcSigner | null,
+  swapHardcode: () => Promise<void>,
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -21,6 +26,7 @@ export const EthereumContext = createContext<IEthereumContext>({
   signer: null,
   connectWallet: () => Promise.resolve(),
   disconnectWallet: () => Promise.resolve(),
+  swapHardcode: () => Promise.resolve(),
 })
 
 export const EthereumProvider: FC<{ children: ReactNode }> = ({ children }) => {
@@ -99,6 +105,7 @@ export const EthereumProvider: FC<{ children: ReactNode }> = ({ children }) => {
       const { message } = (error as Error);
       setError("Failed to connect wallet: " + message);
       console.error(error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -116,6 +123,45 @@ export const EthereumProvider: FC<{ children: ReactNode }> = ({ children }) => {
       const { message } = (error as Error);
       setError("Failed to disconnect wallet: " + message);
       console.error(error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getContract = () => {
+    if (!signer) throw new Error("Wallet not connected");
+  
+    return new ethers.Contract(
+      UNISWAP_WRAPPER_ADDRESS,
+      UniswapWrapperABI,
+      signer
+    );
+  };
+
+  const swapHardcode = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      
+      const contract = getContract();
+      const amount = ethers.parseEther("0.0005");
+      const deadline = Math.floor(Date.now() / 1000) + 60 * 10;
+      const path = [ETH_ADDRESS, USDT_ADDRESS];
+
+      const tx = await contract.swapExactETHForTokens(
+        0,
+        path,
+        address,
+        deadline,
+        { value: amount }
+      );
+
+      await tx.wait();
+    } catch (error) {
+      const { message } = error as Error;
+      setError("Swap failed: " + message);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -128,6 +174,7 @@ export const EthereumProvider: FC<{ children: ReactNode }> = ({ children }) => {
       signer,
       connectWallet,
       disconnectWallet,
+      swapHardcode,
     }}>
       {children}
     </EthereumContext.Provider>

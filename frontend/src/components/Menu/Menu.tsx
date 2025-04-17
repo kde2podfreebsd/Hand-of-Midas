@@ -1,12 +1,12 @@
 import { Divider, Flex } from 'antd';
 import { ActionMenu } from './ActionMenu/ActionMenu';
-import { DrawerMenu } from './DrawerMenu/DrawerMenu';
 import { NavigationMenu } from './NavigationMenu/NavigationMenu';
 
 import { AntDesignOutlined } from '@ant-design/icons';
 import { Button, ConfigProvider } from 'antd';
 import { createStyles } from 'antd-style';
 import React from 'react';
+import { DrawerMenu } from './DrawerMenu/DrawerMenu';
 
 const useStyle = createStyles(({ prefixCls, css }) => ({
   linearGradientButton: css`
