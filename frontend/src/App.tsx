@@ -49,12 +49,13 @@ const App = () => {
                 width: '100$',
                 height: '100%',
                 backgroundColor: 'white',
-                paddingLeft: 50
+                paddingLeft: 20,
+                margin: 0,
               }}
-              justify='left'
+              justify='flex-start'
               align='center'
             >
-              <h2>{PAGE_HEADER[page]}</h2>
+              <h3>{PAGE_HEADER[page]}</h3>
             </Flex>
           </Layout.Header>
           <Layout.Content style={contentStyle}>

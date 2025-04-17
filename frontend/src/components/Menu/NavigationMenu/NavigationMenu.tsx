@@ -37,11 +37,11 @@ export const NavigationMenu = () => {
         {PAGE_HEADER[Pages.Chat]}
       </Menu.Item>
       <Menu.Item
-        key={Pages.Protocols}
+        key={Pages.Wallets}
         icon={<DeploymentUnitOutlined />}
-        onClick={() => renderPage(Pages.Protocols)}
+        onClick={() => renderPage(Pages.Wallets)}
       >
-        {PAGE_HEADER[Pages.Protocols]}
+        {PAGE_HEADER[Pages.Wallets]}
       </Menu.Item>
       <Menu.Item
         key={Pages.Pools}

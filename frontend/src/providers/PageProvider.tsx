@@ -4,7 +4,7 @@ import { createContext, FC, ReactNode, useState } from "react";
 export enum Pages {
   Chat = 'Chat',
   Pools = 'Pools',
-  Protocols = "Protocols",
+  Wallets = "Wallets",
   Transactions = "Transactions",
   Survey = "Survey",
   Analytics = "Analytics",
@@ -25,9 +25,11 @@ export const PageContext = createContext<IPageContext>({
 
 
 export const PageProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const [page, setPage] = useState<Pages>(Pages.Chat);
+  const lsPage = window.localStorage.getItem('menuItem') as Pages | null;
+  const [page, setPage] = useState<Pages>(lsPage ?? Pages.Chat);
 
   const renderPage = (page: Pages): void => {
+    window.localStorage.setItem('menuItem', page)
     setPage(page);
   }
 

@@ -102,14 +102,14 @@ export const PoolsPage = () => {
       <div
         className="no-scrollbar"
         style={{
-          flexGrow: 1, // Растягивается на доступное пространство
-          overflowY: 'auto', // Добавляем скролл при переполнении
+          flexGrow: 1,
+          overflowY: 'auto',
           scrollBehavior: 'smooth',
           border: '1px solid #F0F0F0',
         }}
       >
         {pools.map((pool, i) => {
-          return <div key={i} style={{ width: '100%', border: '1px solid #F0F0F0', height: '8vh' }}>
+          return <div key={i} style={{ width: '100%', borderBottom: '1px solid #F0F0F0', height: '8vh' }}>
              <Row style={{ width: '100%', height: '100%' }}>
               <Col span={24/8}>
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'left', paddingLeft: '25px' }}>
