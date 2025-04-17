@@ -1,5 +1,6 @@
 {
-    "Ethereum": [
+    "Blockchain": [
+        {"Ethereum": [
         {
             "coin": "ETH",
             "amount": 1.6,
@@ -165,8 +166,7 @@
                 "0x3c722677bd494747664b7b677c7ade4375a863d0"
             ]
         }
-    ],
-    "SUI": [
+    ]}, {"SUI": [
         {
             "coin": "SUI",
             "amount": 1.9,
@@ -239,6 +239,7 @@
                 "0x58d9b7cd3b0f00b87c6e37052b3c9d2bcfef6ab8"
             ]
         }
+    ]}
     ],
     "total_balance_eth": 6500,
     "total_balance_sui": 2975,
