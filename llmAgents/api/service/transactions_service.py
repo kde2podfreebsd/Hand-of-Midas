@@ -7,7 +7,7 @@ class TransactionsService:
 
     def get_user_transactions(self, user_id):
         basedir = f'{os.path.abspath(os.path.dirname(__file__))}'
-        with open(f'{basedir}/mock_tx.json') as f:
+        with open(f'{basedir}/mocks/mock_tx.json') as f:
             tx_data = json.load(f)
 
         return tx_data
