@@ -2,6 +2,8 @@ from backend.llm.llm_agents.base_llm import ChatGPTService as BaseChatGPTService
 from backend.llm.mcp.news_mcp import NewsMCP
 from backend.llm.mcp.portfolio_mcp import PortfolioMCP
 from backend.llm.mcp.survey_mcp import SurveyMCP
+from backend.llm.mcp.dune_mcp import DuneMCP
+from backend.llm.llm_agents.onchain_llm import ChatGPTDuneService
 import openai
 import json
 from datetime import datetime
@@ -13,17 +15,22 @@ class ChatGPTChatService(BaseChatGPTService):
         self.news_mcp = NewsMCP()
         self.portfolio_mcp = PortfolioMCP()
         self.survey_mcp = SurveyMCP()
+        self.dune_mcp = DuneMCP()
+        self.dune_llm = ChatGPTDuneService()
+
 
     async def functions_description(self):
         functions_description = (
             "Доступные функции: "
             "1) portfolio() - функция для получения баланса активов юзера, подключенных кошельков к приложению. Если запрос юзера связан как-то с функционалом приложения или с информацией о его активах - используй эту функцию что бы узнать актуальные данные о активах юзера в своем анализе"
-            "2) pools() - функция, которая вернет список подключенных пулов в систему, с которыми можно взаимодействовать. Если запрос юзера связан как-то с функционалом приложения или с информацией о пулах - используй эту функцию что бы узнать актуальные данные о пулах в своем анализе"
-            "3) survey() - функция, которая для юзера вернет проанализированные ответы на вопросы. "
+            "2) pools() - функция, которая вернет список подключенных пулов в систему, с которыми можно взаимодействовать. Обязательно вызывай эту функцию, если речь идет про пулы. Если запрос юзера связан как-то с функционалом приложения или с информацией о пулах - используй эту функцию что бы узнать актуальные данные о пулах в своем анализе"
+            "3) survey() - функция, которая для юзера вернет проанализированные ответы на вопросы. Инвест предпочтения пользователя. Если пользователь хочет что-то уточнить как ему лучше поступить - всегда вызывай эту фукнцию что бы узнать его риск профиль, цели по ребалансировки, доходности и диверсификации"
             f"Новостные теги в системе: {await self.news_mcp.get_tags()}. Если будешь использовать функцию news_summary, исходя из запроса юзера - выбирай от 3х до 10 самых актуальных тегов для генерации новостного саммари для дальнейшего анализа"
             "4) news_summary(tags=List[tags]) - сгенерировать саммари по новостному потоку по новостям с релевантными тегами. Если тебе необходимо узнать информацию о инвестицонных предпочтениях клиента - используй эту функцию что бы узнать актуальные ответы и предпочтения юзера в своем анализе"
-            "5) onchain(dashboards=List[id's]) - получить проанализированные onchain данные с dune api. в массив dashboards добавлять id дашбордов релевантных для запроса юзера"
-            "Список дашбордов: "
+            "5) onchain(context: str) - получить проанализированные onchain(данные/метрики/показатели: блокчейна/крипторынка/протоколов) данные с dune api. context - из всего запроса выдели, какие onchain метрики будут релевантны для пользовательского запроса и составь промпт с контекстом (касающегося onchain данных) для LLM для дальнейшего анализа. Всегда вызывай эту функцию что бы получить ончейн анализ по метрикам блокчейна и разных протоколов. "
+            f"Вот какие данные и дашборды доступны: {json.dumps(self.dune_mcp.get_dashboard_keys())}"
+            f"Список onchain метрик: {self.dune_mcp.get_dashboard_keys()}"
+
         )
         return functions_description
 
@@ -32,17 +39,18 @@ class ChatGPTChatService(BaseChatGPTService):
             client = openai.OpenAI(
                 api_key=self.openai_api_key
             )
-
+            print("1!!!!!!!!!!!!!!")
             system_message = (
                 "Ты de-fi финансовый ассистент. "
                 "Твоя задача - помочь пользователю, используя доступные функции. Ты должен определить, какие функции нужно вызвать для получения нужных данных. "
                 "Каждый запрос к функциям должен быть выполнен поочередно, используя ответы предыдущих шагов, если это необходимо. "
-                f"{await self.functions_description()} "
                 'Ответь в формате: [{"function": "имя_функции", "parameters": {"параметр1": "значение1", "параметр2": "значение2"}}]'
                 'Ответ строго в json! Если для анализа нужно вызвать более 1 функции, передавай их в массив в той последовательности, в которой необходимо из выполнить и получить от них данные'
                 "Если функции выполнять не нужно, то верни: []"
+                f"{await self.functions_description()} "
             )
-
+            print("2!!!!!!!!!!!!!!")
+            print(system_message)
             response = client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -50,13 +58,17 @@ class ChatGPTChatService(BaseChatGPTService):
                     {"role": "user", "content": message}
                 ]
             )
-
+            print("3!!!!!!!!!!!!!!")
             assistant_reply = response.choices[0].message.content.strip()
 
+            print("4!!!!!!!!!!!!!!")
+            print(assistant_reply)
             try:
                 response_data = json.loads(assistant_reply)
             except json.JSONDecodeError as e:
                 raise Exception(f"Failed to parse OpenAI API response: {e}")
+
+            print("5!!!!!!!!!!!!!!")
 
             print("ACTIONS: ", response_data)
 
@@ -105,12 +117,26 @@ class ChatGPTChatService(BaseChatGPTService):
                         summary = await self.news_mcp.get_news_summary_by_tags(tags=tags)
                         text_to_analyze = text_to_analyze + "Новостная сводка: " + summary
 
+                    if func_name == "onchain":
+                        try:
+                            context = params.get("context")
+                        except Exception:
+                            par = json.loads(params)
+                            context = par.get("context")
+
+                        summary = await self.dune_llm.send_message(context=context)
+                        text_to_analyze = text_to_analyze + "Onchain Summary: (ОЧЕНЬ ВАЖНО! При финальном анализе сохрани структуру ончейн анализа и обязательно отобрази все теги iframe, которые были указаны в Onchain Summary): " + summary
+
 
                 print("\nTEXT TO ANALYZE: ", text_to_analyze)
                 response = client.chat.completions.create(
                     model=self.model,
                     messages=[
-                        {"role": "system", "content": "Проанализируй изначальный запрос юзера и дополнительные данные для анализа. Дай форматированный ответ Markdown, с таблицами где это необходимо (допустим для пулов) и с объяснением и обоснованием своего решения"},
+                        {"role": "system", "content": "Проанализируй изначальный запрос юзера и дополнительные данные для анализа."
+                        "Дай форматированный ответ Markdown, с таблицами (в html) где это необходимо (допустим для пулов) и с объяснением и обоснованием своего решения."
+                        "Обязательно перенеси часть с ончейн анализом (если он есть) и ОБЗЯТАЛЬНО отобрази все теги iframe, которые были переданные в тексте для финального анализа (если эти теги есть)."
+                        "Их нельзя пропускать!"
+                         },
                         {"role": "user", "content": text_to_analyze}
                     ]
                 )
