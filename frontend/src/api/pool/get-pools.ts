@@ -1,4 +1,4 @@
-import { API_URL } from "../../constants";
+import { API1_URL } from "../../constants";
 
 export type GetPoolsResponse = Array<{
   pool_name: string; // "WBTC/ETH";
@@ -12,7 +12,7 @@ export type GetPoolsResponse = Array<{
 }>;
 
 export async function getPools(source = "*"): Promise<GetPoolsResponse> {
-  const url = new URL(`${API_URL}/pools`);
+  const url = new URL(`${API1_URL}/pools`);
 
   url.searchParams.append("source", source);
 
