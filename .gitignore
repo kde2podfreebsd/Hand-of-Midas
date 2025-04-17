@@ -47,9 +47,9 @@ coverage.xml
 .pytest_cache/
 cover/
 
-llmAgents/scrapper/news/telegram/sessions/
-llmAgents/scrapper/news/telegram/sessions/*
-llmAgents/scrapper/news/telegram/sessions/test_session.session
+backend/scrapper/news/telegram/sessions/
+backend/scrapper/news/telegram/sessions/*
+backend/scrapper/news/telegram/sessions/test_session.session
 
 *.mo
 *.pot
