@@ -1,12 +1,26 @@
 import { ArrowUpOutlined } from "@ant-design/icons";
 import { Button, Flex, Space, Typography } from "antd";
-import { useContext, useEffect, useRef, useState } from "react";
-import ReactMarkdown from 'react-markdown';
-import RehypeRaw from 'rehype-raw';
+import React, { useContext, useEffect, useRef, useState } from "react";
+import ReactMarkdown, { Options } from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
+import remarkGfm from 'remark-gfm';
+import remarkParse from 'remark-parse';
 import { api } from "../../api";
 import { Message } from "../../api/chat/types";
 import { WithLoader } from "../../components/WithLoader/WithLoader";
 import { UserContext } from "../../providers/UserProvider";
+
+const options: Readonly<Options> = {
+  rehypePlugins: [
+    rehypeRaw,
+    rehypeSanitize,
+  ],
+  remarkPlugins: [
+    remarkGfm,
+    remarkParse,
+  ],
+}
 
 const messagesPerPage = 20;
 
@@ -128,7 +142,9 @@ export const ChatPage = () => {
                           wordBreak: 'break-word',
                         }}
                       >
-                        <ReactMarkdown rehypePlugins={[RehypeRaw]}>{msg.content}</ReactMarkdown>
+                          <div className="react-markdown-html">
+                            <ReactMarkdown {...options}>{msg.content}</ReactMarkdown>
+                          </div>
                       </p>
                       <Typography.Text
                         type="secondary"
