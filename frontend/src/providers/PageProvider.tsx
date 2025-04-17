@@ -6,7 +6,6 @@ export enum Pages {
   Pools = 'Pools',
   Wallets = "Wallets",
   Transactions = "Transactions",
-  Survey = "Survey",
   Analytics = "Analytics",
   Actives = "Actives",
 }
