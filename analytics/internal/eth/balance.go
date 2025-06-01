@@ -14,6 +14,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -69,7 +70,10 @@ func getEthBalance(
 
 func getTokensBalance(tokenByContractAddress map[string]token.Token) (map[string]string, error) {
 	result := make(map[string]string)
+	ticker := time.NewTicker(210 * time.Millisecond)
+	defer ticker.Stop()
 	for contractAddress, token := range tokenByContractAddress {
+		<-ticker.C
 		value, err := getTokenAmountByContractAddress(contractAddress, token.Decimal)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get token balance for %s: %w", contractAddress, err)
