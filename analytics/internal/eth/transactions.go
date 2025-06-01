@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 const (
@@ -47,6 +48,11 @@ type ExtendedTransaction struct {
 	FormattedValue  float64 `json:"formattedValue"`
 	GasUsed         string  `json:"gasUsed"`
 	EtherscanLink   string  `json:"etherscanLink"`
+}
+
+type task struct {
+	index int
+	tx    Transaction
 }
 
 func GetTransactionHistory(address string) (*[]ExtendedTransaction, error) {
@@ -106,50 +112,74 @@ func getRawTransactions(address string) (*[]Transaction, error) {
 	return &etherscanResponse.Result, nil
 }
 
+func processTransactionForRestructure(
+	extendedTransactions []ExtendedTransaction,
+	currentTransaction Transaction,
+	index int,
+	address string,
+) {
+	extendedTransactions[index].TimeStamp = currentTransaction.TimeStamp
+	extendedTransactions[index].Hash = currentTransaction.Hash
+	extendedTransactions[index].From = currentTransaction.From
+	extendedTransactions[index].To = currentTransaction.To
+	extendedTransactions[index].TokenName = currentTransaction.TokenName
+	extendedTransactions[index].GasUsed = currentTransaction.GasUsed
+	extendedTransactions[index].EtherscanLink = fmt.Sprintf("https://etherscan.io/tx/%s", currentTransaction.Hash)
+
+	if strings.ToLower(currentTransaction.To) == strings.ToLower(address) {
+		if strings.ToLower(currentTransaction.From) == strings.ToLower(address) {
+			extendedTransactions[index].TransactionType = "swap"
+		} else {
+			extendedTransactions[index].TransactionType = "received"
+		}
+	} else if strings.ToLower(currentTransaction.From) == strings.ToLower(address) {
+		extendedTransactions[index].TransactionType = "sent"
+	} else {
+		extendedTransactions[index].TransactionType = "unknown"
+	}
+	if currentTransaction.TokenName != "" {
+		decimal, err := strconv.Atoi(currentTransaction.TokenDecimal)
+		if err != nil {
+			extendedTransactions[index].FormattedValue = -1
+			log.Printf("failed to format value for %s: %цw", currentTransaction.Hash, err)
+			return
+		}
+		valueFloat, err := strconv.ParseFloat(currentTransaction.Value, 64)
+		if err != nil {
+			extendedTransactions[index].FormattedValue = -1
+			log.Printf("failed to format value for %s: %w\n", currentTransaction.Hash, err)
+			return
+		}
+		power := float64(-decimal)
+		extendedTransactions[index].FormattedValue = valueFloat * math.Pow(10, power)
+	} else {
+		extendedTransactions[index].FormattedValue, _ = strconv.ParseFloat(currentTransaction.Value, 64)
+	}
+}
+
 func restructureResult(
 	rawTransactions []Transaction,
 	address string,
 ) (*[]ExtendedTransaction, error) {
 	extendedTransactions := make([]ExtendedTransaction, len(rawTransactions))
-	for i, tx := range rawTransactions {
-		extendedTransactions[i].TimeStamp = tx.TimeStamp
-		extendedTransactions[i].Hash = tx.Hash
-		extendedTransactions[i].From = tx.From
-		extendedTransactions[i].To = tx.To
-		extendedTransactions[i].TokenName = tx.TokenName
-		extendedTransactions[i].GasUsed = tx.GasUsed
+	workerCount := 4
+	tasks := make(chan task, len(rawTransactions))
+	var wg sync.WaitGroup
 
-		extendedTransactions[i].EtherscanLink = fmt.Sprintf("https://etherscan.io/tx/%s", tx.Hash)
-		if strings.ToLower(tx.To) == strings.ToLower(address) {
-			if strings.ToLower(tx.From) == strings.ToLower(address) {
-				extendedTransactions[i].TransactionType = "swap"
-			} else {
-				extendedTransactions[i].TransactionType = "received"
+	for w := 0; w < workerCount; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for t := range tasks {
+				processTransactionForRestructure(extendedTransactions, t.tx, t.index, address)
 			}
-		} else if strings.ToLower(tx.From) == strings.ToLower(address) {
-			extendedTransactions[i].TransactionType = "sent"
-		} else {
-			extendedTransactions[i].TransactionType = "unknown"
-		}
-		if tx.TokenName != "" {
-			decimal, err := strconv.Atoi(tx.TokenDecimal)
-			if err != nil {
-				extendedTransactions[i].FormattedValue = -1
-				log.Printf("failed to format value for %s: %цw", tx.Hash, err)
-				continue
-			}
-			valueFloat, err := strconv.ParseFloat(tx.Value, 64)
-			if err != nil {
-				extendedTransactions[i].FormattedValue = -1
-				log.Printf("failed to format value for %s: %w\n", tx.Hash, err)
-				continue
-			}
-			power := float64(-decimal)
-			extendedTransactions[i].FormattedValue = valueFloat * math.Pow(10, power)
-		} else {
-			extendedTransactions[i].FormattedValue, _ = strconv.ParseFloat(tx.Value, 64)
-		}
+		}()
 	}
+	for i, tx := range rawTransactions {
+		tasks <- task{index: i, tx: tx}
+	}
+	close(tasks)
+	wg.Wait()
 
 	return &extendedTransactions, nil
 }
